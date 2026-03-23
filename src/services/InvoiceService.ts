@@ -56,7 +56,9 @@ export class InvoiceService {
       logger.info(`Invoice ${data.invoiceNumber} created successfully`);
       return result.rows[0].p_invoice_id;
     } catch (error) {
-      logger.error(`Error creating invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      logger.error(
+        `Error creating invoice: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       throw error;
     }
   }
@@ -93,7 +95,9 @@ export class InvoiceService {
       logger.info(`Item added to invoice ${invoiceId}`);
       return itemId;
     } catch (error) {
-      logger.error(`Error adding invoice item: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      logger.error(
+        `Error adding invoice item: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       throw error;
     }
   }
@@ -112,7 +116,9 @@ export class InvoiceService {
 
       return result.rows[0];
     } catch (error) {
-      logger.error(`Error fetching invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      logger.error(
+        `Error fetching invoice: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       throw error;
     }
   }
@@ -133,7 +139,9 @@ export class InvoiceService {
 
       return result.rows[0];
     } catch (error) {
-      logger.error(`Error fetching invoice by number: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      logger.error(
+        `Error fetching invoice by number: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       throw error;
     }
   }
@@ -148,7 +156,9 @@ export class InvoiceService {
 
       return result.rows;
     } catch (error) {
-      logger.error(`Error fetching invoice items: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      logger.error(
+        `Error fetching invoice items: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       throw error;
     }
   }
@@ -161,9 +171,13 @@ export class InvoiceService {
       const query = `SELECT * FROM fn_get_all_invoices($1, $2)`;
       const result = await pool.query(query, [limit, offset]);
 
+      console.log('Invoice rows:', JSON.stringify(result.rows, null, 2));
+
       return result.rows;
     } catch (error) {
-      logger.error(`Error fetching invoices: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      logger.error(
+        `Error fetching invoices: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       throw error;
     }
   }
@@ -195,7 +209,9 @@ export class InvoiceService {
       logger.info(`Invoice PDF saved for invoice ${invoiceNumber}`);
       return result.rows[0].p_log_id;
     } catch (error) {
-      logger.error(`Error saving invoice PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      logger.error(
+        `Error saving invoice PDF: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       throw error;
     }
   }
@@ -214,7 +230,9 @@ export class InvoiceService {
 
       return result.rows[0];
     } catch (error) {
-      logger.error(`Error fetching invoice PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      logger.error(
+        `Error fetching invoice PDF: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       throw error;
     }
   }
@@ -239,7 +257,9 @@ export class InvoiceService {
       logger.info(`Invoice ${invoiceId} status updated to ${status}`);
       return true;
     } catch (error) {
-      logger.error(`Error updating invoice status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      logger.error(
+        `Error updating invoice status: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       throw error;
     }
   }
@@ -259,7 +279,9 @@ export class InvoiceService {
       logger.info(`Invoice ${invoiceId} deleted`);
       return true;
     } catch (error) {
-      logger.error(`Error deleting invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      logger.error(
+        `Error deleting invoice: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       throw error;
     }
   }
@@ -272,7 +294,9 @@ export class InvoiceService {
       const templatePath = path.join(__dirname, '../templates/invoice.html');
       return fs.readFileSync(templatePath, 'utf-8');
     } catch (error) {
-      logger.error(`Error loading template: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      logger.error(
+        `Error loading template: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       throw new InternalServerError('Failed to load invoice template');
     }
   }

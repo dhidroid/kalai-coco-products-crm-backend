@@ -93,14 +93,14 @@ export interface InvoicePdf {
 }
 
 export interface InvoiceListItem {
-  invoice_id: number;
-  invoice_number: string;
-  invoice_date: Date;
-  bill_to_name: string;
-  total_amount: number;
-  invoice_status: string;
-  item_count: number;
-  created_at: Date;
+  invoice_id: any;
+  invoice_number: any;
+  invoice_date: any;
+  bill_to_name: any;
+  total_amount: any;
+  invoice_status: any;
+  item_count: any;
+  created_at: any;
 }
 
 export interface InvoiceResponse {

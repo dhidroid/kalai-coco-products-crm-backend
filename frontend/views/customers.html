@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Customers - Kalai Coco Products</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <div class="dashboard">
+      <aside class="sidebar">
+        <div class="sidebar-logo">
+          <h2>Kalai Coco</h2>
+        </div>
+        <ul class="sidebar-menu">
+          <li>
+            <a href="/dashboard" data-page="dashboard"
+              ><span class="icon">📊</span> <span>Dashboard</span></a
+            >
+          </li>
+          <li>
+            <a href="/invoices" data-page="invoices"
+              ><span class="icon">📄</span> <span>Invoices</span></a
+            >
+          </li>
+          <li>
+            <a href="/products" data-page="products"
+              ><span class="icon">📦</span> <span>Products</span></a
+            >
+          </li>
+          <li>
+            <a href="/customers" class="active" data-page="customers"
+              ><span class="icon">👥</span> <span>Customers</span></a
+            >
+          </li>
+          <li>
+            <a href="#logout" id="logout-btn"><span class="icon">🚪</span> <span>Logout</span></a>
+          </li>
+        </ul>
+      </aside>
+
+      <main class="main-content">
+        <header class="header">
+          <h1>Customers</h1>
+          <div class="header-actions">
+            <div class="user-info">
+              <span id="user-name">User</span>
+              <div class="user-avatar" id="user-avatar">U</div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="openCustomerModal()">+ Add Customer</button>
+          </div>
+        </header>
+
+        <div id="content-area">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">All Customers</h3>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>GSTIN</th>
+                    <th>Address</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="customers-table-body">
+                  <tr>
+                    <td colspan="7">
+                      <div class="loading"><div class="spinner"></div></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Customer Modal -->
+    <div class="modal-overlay" id="customer-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="customer-modal-title">Add Customer</h3>
+          <button class="modal-close" onclick="closeModal('customer-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="customer-form">
+            <input type="hidden" id="customer-id" name="customerId" />
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="customer-first-name">First Name</label>
+                <input
+                  type="text"
+                  id="customer-first-name"
+                  name="firstName"
+                  placeholder="e.g., Ravi"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="customer-last-name">Last Name</label>
+                <input
+                  type="text"
+                  id="customer-last-name"
+                  name="lastName"
+                  placeholder="e.g., Kumar"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="customer-email">Email</label>
+                <input
+                  type="email"
+                  id="customer-email"
+                  name="email"
+                  placeholder="e.g., ravi@example.com"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="customer-phone">Phone</label>
+                <input
+                  type="text"
+                  id="customer-phone"
+                  name="phone"
+                  placeholder="e.g., 9876543210"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="customer-gstin">GSTIN</label>
+              <input
+                type="text"
+                id="customer-gstin"
+                name="gstin"
+                placeholder="e.g., 33AAAAA0000A1Z5"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="customer-address">Address</label>
+              <textarea
+                id="customer-address"
+                name="address"
+                rows="3"
+                placeholder="Full address..."
+              ></textarea>
+            </div>
+
+            <div class="form-group" id="password-group">
+              <label for="customer-password">Password <span style="color: var(--secondary-color); font-weight: 400;">(required for new customers)</span></label>
+              <input
+                type="password"
+                id="customer-password"
+                name="password"
+                placeholder="Min. 8 characters"
+              />
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal('customer-modal')">Cancel</button>
+          <button class="btn btn-primary btn-sm" onclick="submitCustomer()">Save Customer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Customer Modal -->
+    <div class="modal-overlay" id="view-customer-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Customer Details</h3>
+          <button class="modal-close" onclick="closeModal('view-customer-modal')">&times;</button>
+        </div>
+        <div class="modal-body" id="view-customer-body">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal('view-customer-modal')">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/customers.js"></script>
+  </body>
+</html>

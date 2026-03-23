@@ -40,21 +40,26 @@ export class UserController {
 
   async createUser(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { email, password, firstName, lastName, role } = req.body;
+      const { email, password, firstName, lastName, role, phone, gstin, address } = req.body;
       const user = await UserService.createUser(
         email,
         password,
         firstName,
         lastName,
-        role || UserRole.USER
+        role || UserRole.EMPLOYEE
       );
+
+      // Update additional details if provided
+      if (phone || gstin || address) {
+        await UserService.updateUser(user.id, { phone, gstin, address });
+      }
 
       logger.info('User created', { email });
 
       const response: ApiResponse<any> = {
         success: true,
         message: 'User created successfully',
-        data: user,
+        data: { ...user, phone, gstin, address },
       };
 
       res.status(201).json(response);
@@ -66,7 +71,10 @@ export class UserController {
   async updateUser(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const updates = req.body;
+      const { email, firstName, lastName, phone, gstin, address, password } = req.body;
+      const updates = { email, firstName, lastName, phone, gstin, address, password };
+      // Remove undefined keys
+      Object.keys(updates).forEach((k) => (updates as any)[k] === undefined && delete (updates as any)[k]);
       const user = await UserService.updateUser(parseInt(id, 10), updates);
 
       logger.info('User updated', { userId: id });

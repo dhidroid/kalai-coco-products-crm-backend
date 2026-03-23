@@ -16,7 +16,6 @@ export const createInvoice: RequestHandler = async (req: AuthRequest, res, next)
   try {
     const { invoiceNumber, invoiceDate, billToUserId, shipToUserId, vehicleNumber, dateOfSupply, sgstRate, cgstRate, igstRate } = req.body;
 
-    // Validate required fields
     if (!invoiceNumber) {
       throw new ValidationError('Missing required fields: invoiceNumber');
     } else if (!invoiceDate) {
@@ -25,8 +24,18 @@ export const createInvoice: RequestHandler = async (req: AuthRequest, res, next)
       throw new ValidationError('Missing required fields: billToUserId');
     } else if (!req.user) {
       throw new ValidationError('Missing required user information');
-    } else {
-        const existingInvoice = await invoiceService.getInvoiceByNumber(invoiceNumber);
+    }
+
+    // Check for duplicate invoice number
+    try {
+      const existingInvoice = await invoiceService.getInvoiceByNumber(invoiceNumber);
+      if (existingInvoice) {
+        throw new ValidationError(`Invoice number '${invoiceNumber}' already exists`);
+      }
+    } catch (err: any) {
+      // If it's a NotFoundError, that's fine (invoice doesn't exist yet)
+      if (err instanceof ValidationError) throw err;
+      // Otherwise (NotFoundError), proceed
     }
 
     const invoiceData: InvoiceHeaderInput = {

@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invoices - Kalai Coco Products</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <div class="dashboard">
+      <aside class="sidebar">
+        <div class="sidebar-logo">
+          <h2>Kalai Coco</h2>
+        </div>
+        <ul class="sidebar-menu">
+          <li>
+            <a href="/dashboard" data-page="dashboard"
+              ><span class="icon">📊</span> <span>Dashboard</span></a
+            >
+          </li>
+          <li>
+            <a href="/invoices" class="active" data-page="invoices"
+              ><span class="icon">📄</span> <span>Invoices</span></a
+            >
+          </li>
+          <li>
+            <a href="/products" data-page="products"
+              ><span class="icon">📦</span> <span>Products</span></a
+            >
+          </li>
+          <li>
+            <a href="/customers" data-page="customers"
+              ><span class="icon">👥</span> <span>Customers</span></a
+            >
+          </li>
+          <li>
+            <a href="#logout" id="logout-btn"><span class="icon">🚪</span> <span>Logout</span></a>
+          </li>
+        </ul>
+      </aside>
+
+      <main class="main-content">
+        <header class="header">
+          <h1>Invoices</h1>
+          <div class="header-actions">
+            <button class="btn btn-primary" onclick="openInvoiceModal()">+ New Invoice</button>
+          </div>
+        </header>
+
+        <div id="content-area">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">All Invoices</h3>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Invoice #</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="invoices-table-body">
+                  <tr>
+                    <td colspan="6">
+                      <div class="loading"><div class="spinner"></div></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pagination" id="invoices-pagination"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Invoice Modal -->
+    <div class="modal-overlay" id="invoice-modal">
+      <div class="modal" style="max-width: 800px">
+        <div class="modal-header">
+          <h3>Create Invoice</h3>
+          <button class="modal-close" onclick="closeModal('invoice-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="invoice-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="invoice-number">Invoice Number</label>
+                <input type="text" id="invoice-number" name="invoiceNumber" required />
+              </div>
+              <div class="form-group">
+                <label for="invoice-date">Invoice Date</label>
+                <input type="date" id="invoice-date" name="invoiceDate" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="bill-to">Bill To (Customer)</label>
+                <select id="bill-to" name="billToUserId" required>
+                  <option value="">Select Customer</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="ship-to">Ship To (Customer)</label>
+                <select id="ship-to" name="shipToUserId">
+                  <option value="">Same as Bill To</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="vehicle-number">Vehicle Number</label>
+                <input
+                  type="text"
+                  id="vehicle-number"
+                  name="vehicleNumber"
+                  placeholder="TN 00 AB 1234"
+                />
+              </div>
+              <div class="form-group">
+                <label for="date-of-supply">Date of Supply</label>
+                <input type="date" id="date-of-supply" name="dateOfSupply" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="sgst-rate">SGST Rate (%)</label>
+                <input type="number" id="sgst-rate" name="sgstRate" value="9.0" step="0.01" />
+              </div>
+              <div class="form-group">
+                <label for="cgst-rate">CGST Rate (%)</label>
+                <input type="number" id="cgst-rate" name="cgstRate" value="9.0" step="0.01" />
+              </div>
+              <div class="form-group">
+                <label for="igst-rate">IGST Rate (%)</label>
+                <input type="number" id="igst-rate" name="igstRate" value="0.0" step="0.01" />
+              </div>
+            </div>
+
+            <h4 style="margin: 20px 0 12px">Invoice Items</h4>
+            <div id="invoice-items">
+              <div class="form-row item-row">
+                <div class="form-group" style="flex: 2">
+                  <label>Product</label>
+                  <select name="productId" class="item-product" required>
+                    <option value="">Select Product</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Quantity</label>
+                  <input
+                    type="number"
+                    name="quantity"
+                    class="item-quantity"
+                    min="1"
+                    value="1"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label>Unit Price</label>
+                  <input
+                    type="number"
+                    name="unitPrice"
+                    class="item-price"
+                    min="0"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label>&nbsp;</label>
+                  <button type="button" class="btn btn-danger btn-sm" onclick="removeItem(this)">
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-secondary btn-sm mt-4" onclick="addItem()">
+              + Add Item
+            </button>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal('invoice-modal')">Cancel</button>
+          <button class="btn btn-primary" onclick="submitInvoice()">Create Invoice</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/invoices.js"></script>
+  </body>
+</html>

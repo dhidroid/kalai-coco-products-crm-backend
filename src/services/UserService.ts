@@ -10,7 +10,7 @@ export class UserService {
     password: string,
     firstName: string,
     lastName: string,
-    role: UserRole = UserRole.USER
+    role: UserRole = UserRole.EMPLOYEE
   ): Promise<User> {
     // Check if user already exists
     const existingUser = await query('SELECT * FROM users WHERE email = $1', [email]);
@@ -41,13 +41,15 @@ export class UserService {
     const user = result.rows[0];
 
     // Insert user details
-    await query(
-      'INSERT INTO user_details (user_id, first_name, last_name) VALUES ($1, $2, $3)',
-      [user.user_id, firstName, lastName]
-    );
+    await query('INSERT INTO user_details (user_id, first_name, last_name) VALUES ($1, $2, $3)', [
+      user.user_id,
+      firstName,
+      lastName,
+    ]);
 
     return {
       id: user.user_id,
+      user_id: user.user_id,
       email: user.email,
       password: user.password_hash,
       firstName: firstName,
@@ -61,7 +63,8 @@ export class UserService {
   async getUserById(id: number): Promise<User> {
     const result = await query(
       `SELECT u.user_id, u.email, u.password_hash, r.name as role_name,
-              ud.first_name, ud.last_name, u.created_at, u.updated_at
+              ud.first_name, ud.last_name, ud.phone, ud.gstin, ud.address,
+              u.created_at, u.updated_at
        FROM users u
        LEFT JOIN roles r ON u.role_id = r.role_id
        LEFT JOIN user_details ud ON u.user_id = ud.user_id
@@ -76,11 +79,15 @@ export class UserService {
     const user = result.rows[0];
     return {
       id: user.user_id,
+      user_id: user.user_id,
       email: user.email,
       password: '', // Password not returned for security
       firstName: user.first_name || '',
       lastName: user.last_name || '',
       role: user.role_name as UserRole,
+      phone: user.phone || undefined,
+      gstin: user.gstin || undefined,
+      address: user.address || undefined,
       createdAt: user.created_at,
       updatedAt: user.updated_at,
     };
@@ -89,7 +96,8 @@ export class UserService {
   async getUserByEmail(email: string): Promise<User | null> {
     const result = await query(
       `SELECT u.user_id, u.email, u.password_hash, r.name as role_name,
-              ud.first_name, ud.last_name, u.created_at, u.updated_at
+              ud.first_name, ud.last_name, ud.phone, ud.gstin, ud.address,
+              u.created_at, u.updated_at
        FROM users u
        LEFT JOIN roles r ON u.role_id = r.role_id
        LEFT JOIN user_details ud ON u.user_id = ud.user_id
@@ -104,11 +112,15 @@ export class UserService {
     const user = result.rows[0];
     return {
       id: user.user_id,
+      user_id: user.user_id,
       email: user.email,
       password: user.password_hash || '',
       firstName: user.first_name || '',
       lastName: user.last_name || '',
       role: user.role_name as UserRole,
+      phone: user.phone || undefined,
+      gstin: user.gstin || undefined,
+      address: user.address || undefined,
       createdAt: user.created_at,
       updatedAt: user.updated_at,
     };
@@ -117,7 +129,8 @@ export class UserService {
   async getAllUsers(): Promise<User[]> {
     const result = await query(
       `SELECT u.user_id, u.email, u.password_hash, r.name as role_name,
-              ud.first_name, ud.last_name, u.created_at, u.updated_at
+              ud.first_name, ud.last_name, ud.phone, ud.gstin, ud.address,
+              u.created_at, u.updated_at
        FROM users u
        LEFT JOIN roles r ON u.role_id = r.role_id
        LEFT JOIN user_details ud ON u.user_id = ud.user_id
@@ -127,11 +140,15 @@ export class UserService {
     return result.rows.map((user: any) => {
       return {
         id: user.user_id,
+        user_id: user.user_id,
         email: user.email,
         password: '', // Password not returned for security
         firstName: user.first_name || '',
         lastName: user.last_name || '',
         role: user.role_name as UserRole,
+        phone: user.phone || undefined,
+        gstin: user.gstin || undefined,
+        address: user.address || undefined,
         createdAt: user.created_at,
         updatedAt: user.updated_at,
       };
@@ -141,50 +158,45 @@ export class UserService {
   async updateUser(id: number, updates: Partial<User>): Promise<User> {
     const user = await this.getUserById(id);
 
-    const newPassword = updates.password
-      ? await bcrypt.hash(updates.password, 10)
-      : user.password;
+    const newPassword = updates.password ? await bcrypt.hash(updates.password, 10) : undefined;
 
-    const result = await query(
-      `UPDATE users 
-       SET email = COALESCE($1, email),
-           password_hash = $2,
-           updated_at = NOW()
-       WHERE user_id = $3
-       RETURNING *`,
-      [
-        updates.email || null,
-        newPassword,
-        id,
-      ]
-    );
-
-    if (updates.firstName || updates.lastName) {
+    if (updates.email || newPassword) {
       await query(
-        'UPDATE user_details SET first_name = COALESCE($1, first_name), last_name = COALESCE($2, last_name) WHERE user_id = $3',
-        [updates.firstName || null, updates.lastName || null, id]
+        `UPDATE users 
+         SET email = COALESCE($1, email),
+             password_hash = COALESCE($2, password_hash),
+             updated_at = NOW()
+         WHERE user_id = $3`,
+        [updates.email || null, newPassword || null, id]
       );
     }
 
-    const updatedUser = result.rows[0];
-    return {
-      id: updatedUser.user_id,
-      email: updatedUser.email,
-      password: updatedUser.password_hash,
-      firstName: updates.firstName || user.firstName,
-      lastName: updates.lastName || user.lastName,
-      role: user.role,
-      createdAt: updatedUser.created_at,
-      updatedAt: updatedUser.updated_at,
-    };
+    // Always update user_details for any provided fields
+    await query(
+      `UPDATE user_details 
+       SET first_name = COALESCE($1, first_name),
+           last_name = COALESCE($2, last_name),
+           phone = COALESCE($3, phone),
+           gstin = COALESCE($4, gstin),
+           address = COALESCE($5, address),
+           updated_at = NOW()
+       WHERE user_id = $6`,
+      [
+        updates.firstName || null,
+        updates.lastName || null,
+        updates.phone || null,
+        updates.gstin || null,
+        updates.address || null,
+        id
+      ]
+    );
+
+    return this.getUserById(id);
   }
 
   async deleteUser(id: number): Promise<void> {
     // Call stored procedure to delete user
-    const result = await query(
-      'CALL sp_delete_user($1, NULL::varchar, NULL::varchar)',
-      [id]
-    );
+    const result = await query('CALL sp_delete_user($1, NULL::varchar, NULL::varchar)', [id]);
 
     // Stored procedures don't return rows in pg, so we verify user existed before deletion
     const userCheck = await query('SELECT user_id FROM users WHERE user_id = $1', [id]);
@@ -202,10 +214,7 @@ export class UserService {
     const roleId = roleResult.rows[0].role_id;
 
     // Call stored procedure to change role
-    await query(
-      'CALL sp_change_user_role($1, $2, NULL::varchar, NULL::varchar)',
-      [userId, roleId]
-    );
+    await query('CALL sp_change_user_role($1, $2, NULL::varchar, NULL::varchar)', [userId, roleId]);
 
     return this.getUserById(userId);
   }

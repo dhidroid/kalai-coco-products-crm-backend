@@ -1,4 +1,4 @@
-/**
+/*
  * Invoice Routes - API endpoints for invoice management
  */
 import { Router } from 'express';
@@ -276,7 +276,12 @@ router.get('/number/:invoiceNumber', authenticate, getInvoiceByNumber);
  *       401:
  *         description: Unauthorized
  */
-router.post('/:invoiceId/items', authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), addInvoiceItem);
+router.post(
+  '/:invoiceId/items',
+  authenticate,
+  authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  addInvoiceItem
+);
 
 /**
  * @swagger
@@ -377,16 +382,13 @@ router.get('/:invoiceId/pdf', authenticate, downloadInvoicePdf);
  *       401:
  *         description: Unauthorized
  */
-router.patch('/:invoiceId/status', authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), updateInvoiceStatus);
+router.patch(
+  '/:invoiceId/status',
+  authenticate,
+  authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  updateInvoiceStatus
+);
 
-/**
- * @swagger
- * /api/invoices/{invoiceId}:
- *   delete:
- *     summary: Delete invoice
- *     description: Delete an invoice and all associated items
- *     tags:
- *       - Invoices
 /**
  * @swagger
  * /invoices/{invoiceId}/generate-pdf:
@@ -429,7 +431,12 @@ router.patch('/:invoiceId/status', authenticate, authorize(UserRole.ADMIN, UserR
  *       401:
  *         description: Unauthorized
  */
-router.post('/:invoiceId/generate-pdf', authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), generateAndSaveInvoicePdf);
+router.post(
+  '/:invoiceId/generate-pdf',
+  authenticate,
+  authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  generateAndSaveInvoicePdf
+);
 
 /**
  * @swagger
@@ -455,6 +462,11 @@ router.post('/:invoiceId/generate-pdf', authenticate, authorize(UserRole.ADMIN, 
  *       401:
  *         description: Unauthorized or insufficient permissions
  */
-router.delete('/:invoiceId', authenticate, authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), deleteInvoice);
+router.delete(
+  '/:invoiceId',
+  authenticate,
+  authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  deleteInvoice
+);
 
 export const invoiceRoutes = router;

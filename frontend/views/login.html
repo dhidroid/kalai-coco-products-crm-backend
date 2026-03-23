@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Kalai Coco Products</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <div class="login-page">
+      <div class="login-card">
+        <h1>Kalai Coco Products</h1>
+        <p class="subtitle">CRM Dashboard Login</p>
+
+        <div id="alert-container"></div>
+
+        <form id="login-form">
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Enter your password"
+              required
+            />
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="submit-btn">Login</button>
+        </form>
+      </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+      const api = new ApiService();
+
+      if (api.isAuthenticated()) {
+        window.location.href = '/dashboard';
+      }
+
+      document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const submitBtn = document.getElementById('submit-btn');
+        const alertContainer = document.getElementById('alert-container');
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Logging in...';
+        alertContainer.innerHTML = '';
+
+        try {
+          const response = await api.post('/api/auth/login', { email, password });
+
+          if (response.success) {
+            api.setToken(response.data.token);
+            api.setUser(response.data.user);
+            console.log('Login successful, redirecting...');
+            window.location.href = '/';
+          }
+        } catch (error) {
+          console.error('Login error:', error);
+          alertContainer.innerHTML = `<div class="alert alert-error">${error.message || 'Login failed. Please check your credentials.'}</div>`;
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Login';
+        }
+      });
+    </script>
+  </body>
+</html>
