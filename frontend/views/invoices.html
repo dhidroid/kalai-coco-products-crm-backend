@@ -35,7 +35,7 @@
             <h1>Invoices</h1>
           </div>
           <div class="header-right">
-            <button class="btn btn-primary" onclick="window.location.href='/invoices/create'">
+            <button class="btn btn-primary" id="add-invoice-btn" onclick="window.location.href='/create/invoice'">
               <i data-lucide="plus"></i> Create Invoice
             </button>
             <div class="user-profile" onclick="window.location.href='/profile'">
@@ -91,19 +91,35 @@
 
             <div class="form-row">
               <div class="form-group">
-                <label>Customer (Bill To)</label>
-                <select id="bill-to" name="billToUserId" class="form-control" required></select>
+                <label>Bill To Customer</label>
+                <select name="billToUserId" id="bill-to" class="form-control" required></select>
               </div>
               <div class="form-group">
                 <label>Ship To (Optional)</label>
-                <select id="ship-to" name="shipToUserId" class="form-control"></select>
+                <div style="display: flex; gap: 8px; align-items: baseline;">
+                  <select name="shipToUserId" id="ship-to" class="form-control"></select>
+                  <label style="white-space: nowrap; cursor: pointer; font-size: 13px; opacity: 0.8;">
+                    <input type="checkbox" id="manual-ship" onchange="toggleShipManual(this)"> Manual
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div id="ship-manual-fields" style="display: none; border: 1px dashed var(--primary-subtle); padding: 16px; border-radius: 8px; margin-bottom: 24px; background: rgba(255,255,255,0.02);">
+              <div class="form-row">
+                <div class="form-group"><label>Ship To Name</label><input type="text" id="ship-to-name" name="shipToName" class="form-control" placeholder="Consignee Name"></div>
+                <div class="form-group"><label>Ship To Phone</label><input type="text" id="ship-to-phone" name="shipToPhone" class="form-control" placeholder="Contact number"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Ship To GSTIN</label><input type="text" id="ship-to-gstin" name="shipToGstin" class="form-control" placeholder="GSTIN (if different)"></div>
+                <div class="form-group"><label>Ship To Address</label><textarea id="ship-to-address" name="shipToAddress" class="form-control" rows="2" placeholder="Full shipping address"></textarea></div>
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
                 <label>Vehicle Number</label>
-                <input type="text" id="vehicle-number" name="vehicleNumber" class="form-control" placeholder="e.g. TN-38-AB-1234" />
+                <input type="text" id="vehicle-number" name="vehicleNumber" class="form-control" placeholder="TN-30-XX-0000" />
               </div>
               <div class="form-group">
                 <label>Date of Supply</label>
@@ -129,7 +145,9 @@
                   <input type="number" name="unitPrice" class="form-control item-price" min="0" step="0.01" required />
                 </div>
                 <div class="form-group" style="padding-top: 28px;">
-                   <!-- Space for delete icon -->
+                  <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.item-row').remove()">
+                    <i data-lucide="trash-2" style="width: 16px;"></i>
+                  </button>
                 </div>
               </div>
             </div>

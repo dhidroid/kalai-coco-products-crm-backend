@@ -18,8 +18,8 @@ function initUserInfo() {
   if (user) {
     const nameEls = document.querySelectorAll('#user-name');
     const avatarEls = document.querySelectorAll('#user-avatar');
-    nameEls.forEach(el => el.textContent = `${user.firstName} ${user.lastName}`);
-    avatarEls.forEach(el => {
+    nameEls.forEach((el) => (el.textContent = `${user.firstName} ${user.lastName}`));
+    avatarEls.forEach((el) => {
       const initials = (user.firstName?.[0] || 'U') + (user.lastName?.[0] || '');
       el.textContent = initials.toUpperCase();
     });
@@ -123,11 +123,15 @@ async function loadProducts() {
     const products = response.data || [];
     const select = document.getElementById('product-id');
     if (select) {
-      select.innerHTML = '<option value="">Select Product To Log</option>' +
+      select.innerHTML =
+        '<option value="">Select Product To Log</option>' +
         products
-          .map(p => `<option value="${p.product_id}" data-unit="${p.unit}">${p.product_name} (${p.unit})</option>`)
+          .map(
+            (p) =>
+              `<option value="${p.product_id}" data-unit="${p.unit}">${p.product_name} (${p.unit})</option>`
+          )
           .join('');
-          
+
       select.addEventListener('change', (e) => {
         const option = e.target.selectedOptions[0];
         if (option && option.dataset.unit) {
@@ -147,17 +151,18 @@ function openProductionModal() {
   form.reset();
   document.getElementById('production-id-hidden').value = '';
   document.getElementById('production-date').value = new Date().toISOString().split('T')[0];
-  
+
   // Suggest a batch number
   const year = new Date().getFullYear();
   const dayOfYear = Math.floor((new Date() - new Date(year, 0, 0)) / 1000 / 60 / 60 / 24);
-  document.getElementById('batch-number').value = `B-${year}-${String(dayOfYear).padStart(3, '0')}-${Math.floor(Math.random() * 100)}`;
-  
+  document.getElementById('batch-number').value =
+    `B-${year}-${String(dayOfYear).padStart(3, '0')}-${Math.floor(Math.random() * 100)}`;
+
   modal.classList.add('active');
 }
 
 function editProduction(id) {
-  const p = productions.find(x => x.production_id === id);
+  const p = productions.find((x) => x.production_id === id);
   if (!p) return;
 
   const modal = document.getElementById('production-modal');
@@ -169,7 +174,7 @@ function editProduction(id) {
   document.getElementById('production-quantity').value = p.quantity;
   document.getElementById('production-unit').value = p.unit;
   document.getElementById('production-notes').value = p.notes || '';
-  
+
   modal.classList.add('active');
 }
 
@@ -189,7 +194,7 @@ async function submitProduction() {
     quantity: parseFloat(formData.get('quantity')),
     unit: formData.get('unit'),
     productionDate: formData.get('productionDate'),
-    notes: formData.get('notes')
+    notes: formData.get('notes'),
   };
 
   const submitBtn = document.querySelector('#production-modal .modal-footer .btn-primary');
@@ -232,7 +237,8 @@ async function deleteProduction(id) {
 function showToast(message, type = 'success') {
   const toast = document.createElement('div');
   toast.className = `alert alert-${type}`;
-  toast.style.cssText = 'position: fixed; bottom: 24px; right: 24px; z-index: 9999; min-width: 280px; box-shadow: var(--shadow-xl); animation: fadeIn 0.3s ease;';
+  toast.style.cssText =
+    'position: fixed; bottom: 24px; right: 24px; z-index: 9999; min-width: 280px; box-shadow: var(--shadow-xl); animation: fadeIn 0.3s ease;';
   toast.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}"></i> <span>${message}</span>`;
   document.body.appendChild(toast);
   if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -249,6 +255,7 @@ function logout() {
 }
 
 window.openProductionModal = openProductionModal;
+window.editProduction = editProduction;
 window.submitProduction = submitProduction;
 window.deleteProduction = deleteProduction;
 window.closeModal = closeModal;

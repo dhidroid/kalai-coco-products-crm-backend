@@ -66,6 +66,10 @@ export const createInvoiceSchema = z.object({
     sgstRate: z.number().optional(),
     cgstRate: z.number().optional(),
     igstRate: z.number().optional(),
+    shipToName: z.string().optional(),
+    shipToAddress: z.string().optional(),
+    shipToGstin: z.string().optional(),
+    shipToPhone: z.string().optional(),
   })
 });
 

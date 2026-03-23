@@ -28,7 +28,11 @@ export const getDashboardSummary: RequestHandler = async (req: AuthRequest, res:
  */
 export const createInvoice: RequestHandler = async (req: AuthRequest, res: Response, next) => {
   try {
-    const { invoiceNumber, invoiceDate, billToUserId, shipToUserId, vehicleNumber, dateOfSupply, sgstRate, cgstRate, igstRate, items } = req.body;
+    const { 
+      invoiceNumber, invoiceDate, billToUserId, shipToUserId, 
+      vehicleNumber, dateOfSupply, sgstRate, cgstRate, igstRate, items,
+      shipToName, shipToAddress, shipToGstin, shipToPhone
+    } = req.body;
 
     const invoiceData: InvoiceHeaderInput = {
       invoiceNumber: invoiceNumber || invoiceService.generateInvoiceNumber(),
@@ -37,10 +41,14 @@ export const createInvoice: RequestHandler = async (req: AuthRequest, res: Respo
       shipToUserId,
       vehicleNumber,
       dateOfSupply: dateOfSupply ? new Date(dateOfSupply) : undefined,
-      sgstRate: sgstRate || 9.0,
-      cgstRate: cgstRate || 9.0,
-      igstRate: igstRate || 0.0,
-      createdBy: req.user?.userId || 0,
+      sgstRate,
+      cgstRate,
+      igstRate,
+      createdBy: req.user!.userId,
+      shipToName,
+      shipToAddress,
+      shipToGstin,
+      shipToPhone
     };
 
     const invoiceId = await invoiceService.createInvoice(invoiceData);

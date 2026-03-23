@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Create Invoice - Kalai Coco Products</title>
+    <title>Update Invoice - Kalai Coco Products</title>
     <link rel="stylesheet" href="/css/styles.css" />
     <script src="https://unpkg.com/lucide@latest"></script>
   </head>
@@ -29,7 +29,7 @@
       <main class="main-wrapper">
         <header>
           <div class="header-left">
-            <h1>Create New Invoice</h1>
+            <h1>Update Invoice</h1>
           </div>
           <div class="header-right">
             <button class="btn btn-secondary" onclick="window.location.href='/invoices'">
@@ -123,7 +123,7 @@
 
               <div class="form-actions" style="margin-top: 32px; border-top: 1px solid var(--primary-subtle); padding-top: 24px;">
                 <button type="button" class="btn btn-secondary" onclick="window.location.href='/invoices'">Discard</button>
-                <button type="submit" class="btn btn-primary" style="padding: 12px 32px; font-weight: 600;">Create Invoice & Generate PDF</button>
+                <button type="submit" class="btn btn-primary" style="padding: 12px 32px; font-weight: 600;">Update Invoice & Regenerate PDF</button>
               </div>
             </form>
           </div>
@@ -132,7 +132,7 @@
     </div>
 
     <script src="/js/api.js"></script>
-    <script src="/js/create-invoice.js"></script>
+    <script src="/js/update-invoice.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         if (typeof lucide !== 'undefined') lucide.createIcons();

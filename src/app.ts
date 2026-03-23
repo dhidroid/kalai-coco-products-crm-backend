@@ -80,54 +80,46 @@ app.get('/login', (_req: Request, res: Response) => {
   res.sendFile(path.join(frontendViews, 'login.html'));
 });
 
-app.get('/', (_req: Request, res: Response) => {
-  res.sendFile(path.join(frontendViews, 'dashboard.html'));
-});
-
 app.get('/dashboard', (_req: Request, res: Response) => {
   res.sendFile(path.join(frontendViews, 'dashboard.html'));
 });
 
-app.get('/invoices', (_req: Request, res: Response) => {
-  res.sendFile(path.join(frontendViews, 'invoices.html'));
-});
-
-app.get('/invoices/create', (_req: Request, res: Response) => {
-  res.sendFile(path.join(frontendViews, 'create-invoice.html'));
-});
-// invoice update
-app.get('/invoices/update', (_req: Request, res: Response) => {
-  res.sendFile(path.join(frontendViews, 'update-invoice.html'));
-});
-//invoice edit , status updatre, delete
-
-app.get('/products', (_req: Request, res: Response) => {
-  res.sendFile(path.join(frontendViews, 'products.html'));
+app.get('/productions', (_req: Request, res: Response) => {
+  res.sendFile(path.join(frontendViews, 'productions.html'));
 });
 
 app.get('/customers', (_req: Request, res: Response) => {
   res.sendFile(path.join(frontendViews, 'customers.html'));
 });
 
-app.get('/customers/create', (_req: Request, res: Response) => {
-  res.sendFile(path.join(frontendViews, 'create-customer.html'));
+app.get('/invoices', (_req: Request, res: Response) => {
+  res.sendFile(path.join(frontendViews, 'invoices.html'));
 });
-// customers update
-app.get('/customers/update', (_req: Request, res: Response) => {
-  res.sendFile(path.join(frontendViews, 'update-customer.html'));
+app.get('/invoices/create', (_req: Request, res: Response) => {
+  res.sendFile(path.join(frontendViews, 'create-invoice.html'));
 });
-
-// customer delete
-app.get('/customers/delete', (_req: Request, res: Response) => {
-  res.sendFile(path.join(frontendViews, 'delete-customer.html'));
+app.get('/products', (_req: Request, res: Response) => {
+  res.sendFile(path.join(frontendViews, 'products.html'));
 });
 
 app.get('/profile', (_req: Request, res: Response) => {
   res.sendFile(path.join(frontendViews, 'profile.html'));
 });
 
-app.get('/productions', (_req: Request, res: Response) => {
-  res.sendFile(path.join(frontendViews, 'productions.html'));
+app.get('/create/invoice', (_req: Request, res: Response) => {
+  res.sendFile(path.join(frontendViews, 'create-invoice.html'));
+});
+
+app.get('/create/customer', (_req: Request, res: Response) => {
+  res.sendFile(path.join(frontendViews, 'create-customer.html'));
+});
+
+app.get('/update/invoice/:id', (_req: Request, res: Response) => {
+  res.sendFile(path.join(frontendViews, 'update-invoice.html'));
+});
+
+app.get('/update/customer/:id', (_req: Request, res: Response) => {
+  res.sendFile(path.join(frontendViews, 'update-customer.html'));
 });
 
 // API Routes

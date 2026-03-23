@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Customers - Kalai Coco Products</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <meta name="description" content="Manage your customer relations and profiles. Quick access to customer contact details and GST info." />
+  </head>
+  <body>
+    <div class="app-container">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h2>KALAI COCO</h2>
+        </div>
+        <ul class="sidebar-menu">
+          <li><a href="/dashboard" data-page="dashboard"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a></li>
+          <li><a href="/invoices" data-page="invoices"><i data-lucide="file-text"></i> <span>Invoices</span></a></li>
+          <li><a href="/productions" data-page="productions"><i data-lucide="factory"></i> <span>Production</span></a></li>
+          <li><a href="/products" data-page="products"><i data-lucide="package"></i> <span>Products</span></a></li>
+          <li><a href="/customers" class="active" data-page="customers"><i data-lucide="users"></i> <span>Customers</span></a></li>
+          <li><a href="/profile" data-page="profile"><i data-lucide="user"></i> <span>Profile</span></a></li>
+        </ul>
+        <div class="sidebar-footer">
+          <a href="#" id="logout-btn"><i data-lucide="log-out"></i> <span>Logout</span></a>
+        </div>
+      </aside>
+
+      <main class="main-wrapper">
+        <header>
+          <div class="header-left">
+            <h1>Update Customer</h1>
+          </div>
+          <div class="header-right">
+            <button class="btn btn-secondary" onclick="window.location.href='/customers'">
+              <i data-lucide="arrow-left"></i> Back to List
+            </button>
+            <div class="user-profile" onclick="window.location.href='/profile'">
+              <div class="user-avatar" id="user-avatar">U</div>
+              <span id="user-name">User Name</span>
+            </div>
+          </div>
+        </header>
+        <section class="content-area">
+          <div class="card" style="max-width: 800px; margin: 0 auto;">
+            <div class="card-body">
+              <form id="customer-form" class="complex-form">
+                <input type="hidden" id="customer-id" />
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" id="customer-first-name" name="firstName" class="form-control" required />
+                  </div>
+                  <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" id="customer-last-name" name="lastName" class="form-control" required />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="customer-email" name="email" class="form-control" required />
+                  </div>
+                  <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="customer-phone" name="phone" class="form-control" />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>GSTIN</label>
+                  <input type="text" id="customer-gstin" name="gstin" class="form-control" />
+                </div>
+
+                <div class="form-group">
+                  <label>Address</label>
+                  <textarea id="customer-address" name="address" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="form-actions" style="margin-top: 24px; text-align: right;">
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='/customers'">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="padding: 10px 30px;">Update Customer</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/update-customer.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
+      });
+    </script>
+  </body>
+</html>

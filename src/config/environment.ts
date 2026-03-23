@@ -24,7 +24,10 @@ export const config = {
     credentials: process.env.CORS_CREDENTIALS === 'true',
   },
   logging: {
-    level: process.env.LOG_LEVEL || 'info',
+    level:  'info',
+  },
+  database_migrate: {
+    skip: process.env.SKIP_MIGRATIONS === 'true',
   },
 };
 

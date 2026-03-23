@@ -121,12 +121,12 @@ function openCustomerModal(customerId = null) {
     document.getElementById('customer-id').value = '';
 
     if (customerId) {
-        const c = customers.find(x => x.id === customerId);
+        const c = customers.find(x => (x.id || x.user_id) === customerId);
         if (c) {
             title.textContent = 'Edit Customer';
             document.getElementById('customer-id').value = c.id || c.user_id;
-            document.getElementById('customer-first-name').value = c.firstName || '';
-            document.getElementById('customer-last-name').value = c.lastName || '';
+            document.getElementById('customer-first-name').value = c.first_name || c.firstName || '';
+            document.getElementById('customer-last-name').value = c.last_name || c.lastName || '';
             document.getElementById('customer-email').value = c.email || '';
             document.getElementById('customer-phone').value = c.phone || '';
             document.getElementById('customer-gstin').value = c.gstin || '';

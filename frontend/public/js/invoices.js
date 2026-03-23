@@ -95,9 +95,10 @@ function renderInvoices() {
             <td><span class="status-badge status-${inv.invoice_status}">${inv.invoice_status}</span></td>
             <td>
                 <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-sm btn-secondary" onclick="viewInvoice(${inv.invoice_id})"><i data-lucide="eye"></i></button>
-                    <button class="btn btn-sm btn-primary" onclick="downloadPdf(${inv.invoice_id})"><i data-lucide="download"></i></button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteInvoice(${inv.invoice_id})"><i data-lucide="trash-2"></i></button>
+                    <button class="btn btn-sm btn-secondary" onclick="viewInvoice(${inv.invoice_id})" title="View"><i data-lucide="eye"></i></button>
+                    <button class="btn btn-sm btn-primary" onclick="window.location.href='/update/invoice/${inv.invoice_id}'" title="Edit"><i data-lucide="edit"></i></button>
+                    <button class="btn btn-sm btn-info" onclick="downloadPdf(${inv.invoice_id})" title="Download"><i data-lucide="download"></i></button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteInvoice(${inv.invoice_id})" title="Delete"><i data-lucide="trash-2"></i></button>
                 </div>
             </td>
         </tr>
@@ -182,14 +183,26 @@ function addItem() {
         <div class="form-group">
             <input type="number" class="form-control item-price" step="0.01" required>
         </div>
-        <div class="form-group" style="flex: 0;">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="this.closest('.item-row').remove()">
-                <i data-lucide="x" style="width: 14px;"></i>
+        <div class="form-group" style="padding-top: 28px;">
+            <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.item-row').remove()">
+                <i data-lucide="trash-2" style="width: 16px;"></i>
             </button>
         </div>
     `;
     container.appendChild(div);
     if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function toggleShipManual(checkbox) {
+    const manualFields = document.getElementById('ship-manual-fields');
+    const shipToSelect = document.getElementById('ship-to');
+    if (checkbox.checked) {
+        manualFields.style.display = 'block';
+        shipToSelect.disabled = true;
+    } else {
+        manualFields.style.display = 'none';
+        shipToSelect.disabled = false;
+    }
 }
 
 async function submitInvoice() {
@@ -214,16 +227,21 @@ async function submitInvoice() {
         }
     });
 
+    const isManualShip = document.getElementById('manual-ship').checked;
     const data = {
         invoiceNumber: document.getElementById('invoice-number').value,
         invoiceDate: document.getElementById('invoice-date').value ? new Date(document.getElementById('invoice-date').value).toISOString() : undefined,
         billToUserId: parseInt(document.getElementById('bill-to').value),
-        shipToUserId: parseInt(document.getElementById('ship-to').value) || parseInt(document.getElementById('bill-to').value),
+        shipToUserId: isManualShip ? undefined : (parseInt(document.getElementById('ship-to').value) || undefined),
         vehicleNumber: document.getElementById('vehicle-number').value || undefined,
         dateOfSupply: document.getElementById('date-of-supply').value ? new Date(document.getElementById('date-of-supply').value).toISOString() : undefined,
-        sgstRate: parseFloat(document.querySelector('input[name="sgstRate"]')?.value || document.getElementById('sgst-rate')?.value || 9),
-        cgstRate: parseFloat(document.querySelector('input[name="cgstRate"]')?.value || document.getElementById('cgst-rate')?.value || 9),
-        igstRate: parseFloat(document.querySelector('input[name="igstRate"]')?.value || document.getElementById('igst-rate')?.value || 0),
+        sgstRate: parseFloat(document.getElementById('sgst-rate').value),
+        cgstRate: parseFloat(document.getElementById('cgst-rate').value),
+        igstRate: parseFloat(document.getElementById('igst-rate').value),
+        shipToName: isManualShip ? document.getElementById('ship-to-name').value : undefined,
+        shipToAddress: isManualShip ? document.getElementById('ship-to-address').value : undefined,
+        shipToGstin: isManualShip ? document.getElementById('ship-to-gstin').value : undefined,
+        shipToPhone: isManualShip ? document.getElementById('ship-to-phone').value : undefined,
         items
     };
 
@@ -390,4 +408,5 @@ window.downloadPdf = downloadPdf;
 window.deleteInvoice = deleteInvoice;
 window.updateInvoiceStatus = updateInvoiceStatus;
 window.onProductChange = onProductChange;
+window.toggleShipManual = toggleShipManual;
 window.logout = logout;

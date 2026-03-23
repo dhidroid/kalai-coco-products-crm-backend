@@ -32,6 +32,10 @@ export interface InvoiceHeaderInput {
   cgstRate?: number;
   igstRate?: number;
   createdBy: number;
+  shipToName?: string;
+  shipToAddress?: string;
+  shipToGstin?: string;
+  shipToPhone?: string;
 }
 
 export interface InvoiceHeaderRow {
@@ -68,6 +72,7 @@ export interface InvoiceDetail {
   ship_to_name: string;
   ship_to_phone: string;
   ship_to_gstin: string;
+  ship_to_address: string;
   vehicle_number?: string;
   date_of_supply?: Date;
   subtotal: number;
@@ -148,6 +153,7 @@ export interface HtmlTemplateData {
   shipToName: string;
   shipToAddress: string;
   shipToGstin: string;
+  shipToPhone: string;
   vehicleNumber?: string;
   dateOfSupply?: string;
   items: Array<{

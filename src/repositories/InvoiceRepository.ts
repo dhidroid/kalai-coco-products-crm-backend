@@ -27,6 +27,10 @@ export class InvoiceRepository extends BaseRepository {
     cgstRate?: number;
     igstRate?: number;
     createdBy: number;
+    shipToName?: string;
+    shipToAddress?: string;
+    shipToGstin?: string;
+    shipToPhone?: string;
   }): Promise<number> {
     const result = await this.callProcedure('sp_create_invoice', [
       data.invoiceNumber,
@@ -39,6 +43,10 @@ export class InvoiceRepository extends BaseRepository {
       data.cgstRate || 9.0,
       data.igstRate || 0.0,
       data.createdBy,
+      data.shipToName || null,
+      data.shipToAddress || null,
+      data.shipToGstin || null,
+      data.shipToPhone || null,
       null, // OUT p_invoice_id
       null, // OUT p_status
     ]);

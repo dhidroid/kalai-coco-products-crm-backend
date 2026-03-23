@@ -19,6 +19,10 @@ const pool = new Pool({
 });
 
 async function runMigration() {
+  if (process.env.SKIP_MIGRATIONS === 'true') {
+    console.log('Skipping database migration as per SKIP_MIGRATIONS env var');
+    return;
+  }
   const client = await pool.connect();
 
   try {
