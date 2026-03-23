@@ -1,8 +1,6 @@
-/**
- * Invoice Service - Business logic for invoice management
- */
-import pkg from 'pg';
+import { InvoiceRepository } from '../repositories/InvoiceRepository';
 import { logger } from '../utils/logger';
+import { productionService } from './ProductionService';
 import {
   InvoiceHeaderInput,
   InvoiceItemInput,
@@ -15,349 +13,173 @@ import {
 import { NotFoundError, ValidationError, InternalServerError } from '../utils/errors';
 import * as fs from 'fs';
 import * as path from 'path';
-import dotenv from 'dotenv';
+import { htmlToPdf } from '../utils/pdf';
+import Mustache from 'mustache';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
-
-const { Pool } = pkg;
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
+const currentFilename = fileURLToPath(import.meta.url);
+const currentDir = path.dirname(currentFilename);
 
 export class InvoiceService {
-  /**
-   * Create a new invoice
-   */
+  private invoiceRepository: InvoiceRepository;
+
+  constructor() {
+    this.invoiceRepository = new InvoiceRepository();
+  }
+
   async createInvoice(data: InvoiceHeaderInput): Promise<number> {
     try {
-      const query = `
-        CALL sp_create_invoice(
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
-        )
-      `;
-
-      const result = await pool.query(query, [
-        data.invoiceNumber,
-        data.invoiceDate,
-        data.billToUserId,
-        data.shipToUserId || null,
-        data.vehicleNumber || null,
-        data.dateOfSupply || null,
-        data.sgstRate || 9.0,
-        data.cgstRate || 9.0,
-        data.igstRate || 0.0,
-        data.createdBy,
-      ]);
-
+      const invoiceId = await this.invoiceRepository.create(data);
+      if (invoiceId === -1) {
+        throw new ValidationError('Failed to create invoice (database constraint or missing user)');
+      }
       logger.info(`Invoice ${data.invoiceNumber} created successfully`);
-      return result.rows[0].p_invoice_id;
+      return invoiceId;
     } catch (error) {
-      logger.error(
-        `Error creating invoice: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      logger.error(`Error creating invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }
 
-  /**
-   * Add item to invoice
-   */
   async addInvoiceItem(invoiceId: number, item: InvoiceItemInput): Promise<number> {
-    try {
-      // Validate quantity and price
-      if (item.quantity <= 0 || item.unitPrice < 0) {
-        throw new ValidationError('Invalid quantity or unit price');
-      }
-
-      const query = `
-        CALL sp_add_invoice_item(
-          $1, $2, $3, $4, $5
-        )
-      `;
-
-      const result = await pool.query(query, [
-        invoiceId,
-        item.productId,
-        item.quantity,
-        item.unitPrice,
-        item.rate || item.unitPrice,
-      ]);
-
-      const itemId = result.rows[0].p_item_id;
-      if (itemId === -1) {
-        throw new ValidationError(result.rows[0].p_status || 'Failed to add invoice item');
-      }
-
-      logger.info(`Item added to invoice ${invoiceId}`);
-      return itemId;
-    } catch (error) {
-      logger.error(
-        `Error adding invoice item: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-      throw error;
+    if (item.quantity <= 0 || item.unitPrice < 0) {
+      throw new ValidationError('Invalid quantity or unit price');
     }
-  }
 
-  /**
-   * Get invoice with all details
-   */
-  async getInvoiceById(invoiceId: number): Promise<InvoiceDetail> {
-    try {
-      const query = `SELECT * FROM fn_get_invoice_with_items($1)`;
-      const result = await pool.query(query, [invoiceId]);
-
-      if (result.rows.length === 0) {
-        throw new NotFoundError(`Invoice with ID ${invoiceId} not found`);
-      }
-
-      return result.rows[0];
-    } catch (error) {
-      logger.error(
-        `Error fetching invoice: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Get invoice by number
-   */
-  async getInvoiceByNumber(invoiceNumber: string): Promise<InvoiceDetail> {
-    try {
-      const query = `SELECT * FROM fn_get_invoice_with_items(
-        (SELECT invoice_id FROM invoice_headers WHERE invoice_number = $1)
-      )`;
-      const result = await pool.query(query, [invoiceNumber]);
-
-      if (result.rows.length === 0) {
-        throw new NotFoundError(`Invoice ${invoiceNumber} not found`);
-      }
-
-      return result.rows[0];
-    } catch (error) {
-      logger.error(
-        `Error fetching invoice by number: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Get invoice items
-   */
-  async getInvoiceItems(invoiceId: number): Promise<InvoiceItemRow[]> {
-    try {
-      const query = `SELECT * FROM fn_get_invoice_items($1)`;
-      const result = await pool.query(query, [invoiceId]);
-
-      return result.rows;
-    } catch (error) {
-      logger.error(
-        `Error fetching invoice items: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Get all invoices with pagination
-   */
-  async getAllInvoices(limit: number = 10, offset: number = 0): Promise<InvoiceListItem[]> {
-    try {
-      const query = `SELECT * FROM fn_get_all_invoices($1, $2)`;
-      const result = await pool.query(query, [limit, offset]);
-
-      console.log('Invoice rows:', JSON.stringify(result.rows, null, 2));
-
-      return result.rows;
-    } catch (error) {
-      logger.error(
-        `Error fetching invoices: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Save invoice PDF binary
-   */
-  async saveInvoicePdf(
-    invoiceId: number,
-    invoiceNumber: string,
-    pdfBuffer: Buffer,
-    generatedBy: number
-  ): Promise<number> {
-    try {
-      const query = `
-        CALL sp_save_invoice_pdf(
-          $1, $2, $3, $4, $5
-        )
-      `;
-
-      const result = await pool.query(query, [
-        invoiceId,
-        invoiceNumber,
-        pdfBuffer,
-        pdfBuffer.length,
-        generatedBy,
-      ]);
-
-      logger.info(`Invoice PDF saved for invoice ${invoiceNumber}`);
-      return result.rows[0].p_log_id;
-    } catch (error) {
-      logger.error(
-        `Error saving invoice PDF: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Get invoice PDF
-   */
-  async getInvoicePdf(invoiceId: number): Promise<InvoicePdf> {
-    try {
-      const query = `SELECT * FROM fn_get_invoice_pdf($1)`;
-      const result = await pool.query(query, [invoiceId]);
-
-      if (result.rows.length === 0) {
-        throw new NotFoundError(`PDF for invoice ${invoiceId} not found`);
-      }
-
-      return result.rows[0];
-    } catch (error) {
-      logger.error(
-        `Error fetching invoice PDF: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Update invoice status
-   */
-  async updateInvoiceStatus(invoiceId: number, status: string): Promise<boolean> {
-    try {
-      const validStatuses = ['draft', 'finalized', 'sent', 'paid', 'cancelled'];
-      if (!validStatuses.includes(status)) {
-        throw new ValidationError(`Invalid status: ${status}`);
-      }
-
-      const query = `CALL sp_update_invoice_status($1, $2)`;
-      const result = await pool.query(query, [invoiceId, status]);
-
-      if (!result.rows[0].p_success) {
-        throw new NotFoundError(result.rows[0].p_message);
-      }
-
-      logger.info(`Invoice ${invoiceId} status updated to ${status}`);
-      return true;
-    } catch (error) {
-      logger.error(
-        `Error updating invoice status: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Delete invoice
-   */
-  async deleteInvoice(invoiceId: number): Promise<boolean> {
-    try {
-      const query = `CALL sp_delete_invoice($1)`;
-      const result = await pool.query(query, [invoiceId]);
-
-      if (!result.rows[0].p_success) {
-        throw new NotFoundError(result.rows[0].p_message);
-      }
-
-      logger.info(`Invoice ${invoiceId} deleted`);
-      return true;
-    } catch (error) {
-      logger.error(
-        `Error deleting invoice: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Load HTML template
-   */
-  private loadHtmlTemplate(): string {
-    try {
-      const templatePath = path.join(__dirname, '../templates/invoice.html');
-      return fs.readFileSync(templatePath, 'utf-8');
-    } catch (error) {
-      logger.error(
-        `Error loading template: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-      throw new InternalServerError('Failed to load invoice template');
-    }
-  }
-
-  /**
-   * Render HTML from template with data
-   */
-  renderHtmlInvoice(data: HtmlTemplateData): string {
-    let html = this.loadHtmlTemplate();
-
-    // Replace all template variables with actual data
-    const replaceVariable = (variable: string, value: any) => {
-      const regex = new RegExp(`{{${variable}}}`, 'g');
-      html = html.replace(regex, value !== null && value !== undefined ? String(value) : '');
-    };
-
-    // Simple variable replacements
-    Object.entries(data).forEach(([key, value]) => {
-      if (key === 'items') {
-        // Handle items array separately
-        const itemsHtml = this.renderItems(value);
-        html = html.replace(/{{#items}}[\s\S]*?{{\/items}}/g, itemsHtml);
-      } else {
-        replaceVariable(key, value);
-      }
+    const itemId = await this.invoiceRepository.addItem({
+      invoiceId,
+      productId: item.productId,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      rate: item.rate
     });
 
-    return html;
+    if (itemId === -1) {
+      throw new ValidationError('Failed to add invoice item');
+    }
+
+    return itemId;
   }
 
-  /**
-   * Render invoice items HTML
-   */
-  private renderItems(items: any[]): string {
-    return items
-      .map((item, index) => {
-        return `
-        <tr>
-          <td class="text-center">${index + 1}</td>
-          <td>${item.description}</td>
-          <td class="text-center"><span class="hsn-code">${item.hsnCode}</span></td>
-          <td class="text-right">${item.quantity} ${item.unit}</td>
-          <td class="text-right amount">₹${parseFloat(item.unitPrice).toFixed(2)}</td>
-          <td class="text-right amount">₹${parseFloat(item.rate).toFixed(2)}</td>
-          <td class="text-right amount">₹${parseFloat(item.itemTotal).toFixed(2)}</td>
-        </tr>
-      `;
-      })
-      .join('');
+  async getInvoiceById(invoiceId: number): Promise<InvoiceDetail> {
+    const invoice = await this.invoiceRepository.getById(invoiceId);
+    if (!invoice) {
+      throw new NotFoundError(`Invoice with ID ${invoiceId} not found`);
+    }
+    return invoice;
   }
 
-  /**
-   * Generate unique invoice number
-   */
+  async getAllInvoices(limit: number = 10, offset: number = 0): Promise<InvoiceListItem[]> {
+    return this.invoiceRepository.getAll(limit, offset);
+  }
+
+  async updateInvoiceStatus(invoiceId: number, status: string): Promise<void> {
+    const validStatuses = ['draft', 'issued', 'paid', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+      throw new ValidationError(`Invalid status: ${status}`);
+    }
+    await this.invoiceRepository.updateStatus(invoiceId, status);
+  }
+
+  async deleteInvoice(invoiceId: number): Promise<void> {
+    await this.invoiceRepository.softDelete(invoiceId);
+  }
+
+  async generatePdfBuffer(invoiceId: number): Promise<{ pdfBuffer: Buffer, invoiceNumber: string }> {
+    const invoice = await this.getInvoiceById(invoiceId);
+    const items = await this.invoiceRepository.getItems(invoiceId);
+
+    const templateData: HtmlTemplateData = {
+      companyName: 'Kalai Coco Products',
+      companyGstin: '33JZAPK2901Q1Z5',
+      companyAddress: 'Ellayur, Muthuyaikanpatty omlur (TK), Salem, Tamil Nadu - 636304',
+      companyPhone: '9025973435',
+      companyEmail: 'admin@kalaicoco.com',
+      companyWebsite: 'www.kalaicoco.com',
+      invoiceNumber: invoice.invoice_number,
+      invoiceDate: new Date(invoice.invoice_date).toLocaleDateString(),
+      billToName: invoice.bill_to_name,
+      billToPhone: invoice.bill_to_phone,
+      billToGstin: invoice.bill_to_gstin,
+      billToAddress: invoice.bill_to_address,
+      shipToName: invoice.ship_to_name || '',
+      shipToAddress: '',
+      shipToGstin: '',
+      vehicleNumber: invoice.vehicle_number || '',
+      dateOfSupply: invoice.date_of_supply ? new Date(invoice.date_of_supply).toLocaleDateString() : '',
+      subtotal: Number(invoice.subtotal).toFixed(2),
+      sgstRate: Number(invoice.sgst_rate),
+      sgstAmount: Number(invoice.sgst_amount).toFixed(2),
+      cgstRate: Number(invoice.cgst_rate),
+      cgstAmount: Number(invoice.cgst_amount).toFixed(2),
+      igstRate: Number(invoice.igst_rate),
+      igstAmount: Number(invoice.igst_amount).toFixed(2),
+      totalAmount: Number(invoice.total_amount).toFixed(2),
+      bankName: 'Indian Bank',
+      accountNumber: '1234567890',
+      ifscCode: 'IDIB000O012',
+      branchName: 'Omalur',
+      termsConditions: '1. Goods once sold will not be taken back.\n2. Interest @ 18% will be charged if payment is not made within due date.',
+      contactEmail: 'admin@kalaicoco.com',
+      contactPhone: '9025973435',
+      contactWebsite: 'www.kalaicoco.com',
+      generatedDate: new Date().toLocaleDateString(),
+      generatedBy: 'System',
+      items: items.map(item => ({
+        description: item.description,
+        hsnCode: item.hsn_code,
+        quantity: item.quantity.toString(),
+        unit: item.unit,
+        unitPrice: Number(item.unit_price).toFixed(2),
+        rate: Number(item.rate).toFixed(2),
+        itemTotal: Number(item.item_total).toFixed(2)
+      }))
+    };
+
+
+    const html = this.renderHtmlInvoice(templateData);
+    const pdfBuffer = await htmlToPdf(html);
+
+    return {
+      pdfBuffer,
+      invoiceNumber: invoice.invoice_number
+    };
+  }
+
+  async getDashboardSummary(): Promise<any> {
+    const summary = await this.invoiceRepository.getSummary();
+    const recentInvoices = await this.invoiceRepository.getRecentInvoices();
+    const recentProductions = await productionService.getAllProductions(5, 0);
+    
+    return {
+      summary,
+      recentInvoices,
+      recentProductions
+    };
+  }
+
+  private renderHtmlInvoice(data: HtmlTemplateData): string {
+    const templatePath = path.join(currentDir, '../templates/invoice.html');
+    const templateString = fs.readFileSync(templatePath, 'utf-8');
+
+    // Make items 1-indexed for the template instead of 0-indexed, if template needs @index natively, but we can just supply index manually.
+    const viewData = {
+      ...data,
+      items: data.items.map((item, i) => ({ ...item, index: i + 1 })),
+      hasIgst: data.igstRate > 0
+    };
+
+    return Mustache.render(templateString, viewData);
+  }
+
   generateInvoiceNumber(): string {
     const date = new Date();
     const year = date.getFullYear().toString().slice(-2);
     const month = String(date.getMonth() + 1).padStart(2, '0');
-    const randomNum = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
-    return `INV-${year}${month}-${randomNum}`;
+    const random = Math.floor(Math.random() * 9000) + 1000;
+    return `INV-${year}${month}-${random}`;
   }
 }
 
 export const invoiceService = new InvoiceService();
+

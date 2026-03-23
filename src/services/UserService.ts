@@ -1,223 +1,130 @@
-import { query } from '@config/database';
-import type { User } from '../types/index';
-import { UserRole } from '../types/index';
-import { ValidationError, ConflictError, NotFoundError } from '@utils/errors';
+import { UserRepository, UserRow } from '../repositories/UserRepository';
+import { User, UserRole } from '../types/index';
+import { ValidationError, ConflictError, NotFoundError } from '../utils/errors';
 import bcrypt from 'bcryptjs';
 
 export class UserService {
-  async createUser(
-    email: string,
-    password: string,
-    firstName: string,
-    lastName: string,
-    role: UserRole = UserRole.EMPLOYEE
-  ): Promise<User> {
-    // Check if user already exists
-    const existingUser = await query('SELECT * FROM users WHERE email = $1', [email]);
-    if (existingUser.rows.length > 0) {
+  private userRepository: UserRepository;
+
+  constructor() {
+    this.userRepository = new UserRepository();
+  }
+
+  private mapRowToUser(row: any): User {
+    return {
+      id: Number(row.user_id),
+      user_id: Number(row.user_id),
+      email: row.email,
+      password: row.password_hash || '',
+      firstName: row.first_name || '',
+      lastName: row.last_name || '',
+      role: row.role_name as UserRole,
+      phone: row.phone || undefined,
+      gstin: row.gstin || undefined,
+      address: row.address || undefined,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  async createUser(data: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    role: UserRole;
+    dob?: string;
+    phone?: string;
+  }): Promise<User> {
+    const existingUser = await this.userRepository.getByEmail(data.email);
+    if (existingUser) {
       throw new ConflictError('User with this email already exists');
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Get role_id from role name
-    const roleResult = await query('SELECT role_id FROM roles WHERE name = $1', [role]);
-    if (roleResult.rows.length === 0) {
-      throw new ValidationError(`Role ${role} not found`);
-    }
-    const roleId = roleResult.rows[0].role_id;
-
-    // Create user with direct INSERT
-    const result = await query(
-      'INSERT INTO users (email, password_hash, role_id) VALUES ($1, $2, $3) RETURNING user_id, email, password_hash, role_id, is_active, created_at, updated_at',
-      [email, hashedPassword, roleId]
-    );
-
-    if (result.rows.length === 0) {
-      throw new ValidationError('Failed to create user');
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const roleId = await this.userRepository.getRoleIdByName(data.role);
+    if (!roleId) {
+      throw new ValidationError(`Role ${data.role} not found`);
     }
 
-    const user = result.rows[0];
+    const userId = await this.userRepository.create({
+      email: data.email,
+      passwordHash: hashedPassword,
+      roleId: roleId,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      dob: data.dob,
+      phone: data.phone,
+    });
 
-    // Insert user details
-    await query('INSERT INTO user_details (user_id, first_name, last_name) VALUES ($1, $2, $3)', [
-      user.user_id,
-      firstName,
-      lastName,
-    ]);
-
-    return {
-      id: user.user_id,
-      user_id: user.user_id,
-      email: user.email,
-      password: user.password_hash,
-      firstName: firstName,
-      lastName: lastName,
-      role: role,
-      createdAt: user.created_at,
-      updatedAt: user.updated_at,
-    };
+    const user = await this.userRepository.getById(userId);
+    return this.mapRowToUser(user);
   }
 
   async getUserById(id: number): Promise<User> {
-    const result = await query(
-      `SELECT u.user_id, u.email, u.password_hash, r.name as role_name,
-              ud.first_name, ud.last_name, ud.phone, ud.gstin, ud.address,
-              u.created_at, u.updated_at
-       FROM users u
-       LEFT JOIN roles r ON u.role_id = r.role_id
-       LEFT JOIN user_details ud ON u.user_id = ud.user_id
-       WHERE u.user_id = $1`,
-      [id]
-    );
-
-    if (result.rows.length === 0) {
+    const row = await this.userRepository.getById(id);
+    if (!row) {
       throw new NotFoundError('User not found');
     }
-
-    const user = result.rows[0];
-    return {
-      id: user.user_id,
-      user_id: user.user_id,
-      email: user.email,
-      password: '', // Password not returned for security
-      firstName: user.first_name || '',
-      lastName: user.last_name || '',
-      role: user.role_name as UserRole,
-      phone: user.phone || undefined,
-      gstin: user.gstin || undefined,
-      address: user.address || undefined,
-      createdAt: user.created_at,
-      updatedAt: user.updated_at,
-    };
+    const user = this.mapRowToUser(row);
+    user.password = ''; // Security
+    return user;
   }
 
   async getUserByEmail(email: string): Promise<User | null> {
-    const result = await query(
-      `SELECT u.user_id, u.email, u.password_hash, r.name as role_name,
-              ud.first_name, ud.last_name, ud.phone, ud.gstin, ud.address,
-              u.created_at, u.updated_at
-       FROM users u
-       LEFT JOIN roles r ON u.role_id = r.role_id
-       LEFT JOIN user_details ud ON u.user_id = ud.user_id
-       WHERE u.email = $1`,
-      [email]
-    );
-
-    if (result.rows.length === 0) {
-      return null;
-    }
-
-    const user = result.rows[0];
-    return {
-      id: user.user_id,
-      user_id: user.user_id,
-      email: user.email,
-      password: user.password_hash || '',
-      firstName: user.first_name || '',
-      lastName: user.last_name || '',
-      role: user.role_name as UserRole,
-      phone: user.phone || undefined,
-      gstin: user.gstin || undefined,
-      address: user.address || undefined,
-      createdAt: user.created_at,
-      updatedAt: user.updated_at,
-    };
+    const row = await this.userRepository.getByEmail(email);
+    if (!row) return null;
+    return this.mapRowToUser(row);
   }
 
-  async getAllUsers(): Promise<User[]> {
-    const result = await query(
-      `SELECT u.user_id, u.email, u.password_hash, r.name as role_name,
-              ud.first_name, ud.last_name, ud.phone, ud.gstin, ud.address,
-              u.created_at, u.updated_at
-       FROM users u
-       LEFT JOIN roles r ON u.role_id = r.role_id
-       LEFT JOIN user_details ud ON u.user_id = ud.user_id
-       ORDER BY u.created_at DESC`
-    );
-
-    return result.rows.map((user: any) => {
-      return {
-        id: user.user_id,
-        user_id: user.user_id,
-        email: user.email,
-        password: '', // Password not returned for security
-        firstName: user.first_name || '',
-        lastName: user.last_name || '',
-        role: user.role_name as UserRole,
-        phone: user.phone || undefined,
-        gstin: user.gstin || undefined,
-        address: user.address || undefined,
-        createdAt: user.created_at,
-        updatedAt: user.updated_at,
-      };
+  async getAllUsers(limit: number = 10, offset: number = 0): Promise<User[]> {
+    const rows = await this.userRepository.getAll(limit, offset);
+    return rows.map((row) => {
+      const u = this.mapRowToUser(row);
+      u.password = '';
+      return u;
     });
   }
 
-  async updateUser(id: number, updates: Partial<User>): Promise<User> {
-    const user = await this.getUserById(id);
-
-    const newPassword = updates.password ? await bcrypt.hash(updates.password, 10) : undefined;
-
-    if (updates.email || newPassword) {
-      await query(
-        `UPDATE users 
-         SET email = COALESCE($1, email),
-             password_hash = COALESCE($2, password_hash),
-             updated_at = NOW()
-         WHERE user_id = $3`,
-        [updates.email || null, newPassword || null, id]
-      );
+  async updateUser(id: number, updates: any): Promise<User> {
+    const existing = await this.userRepository.getById(id);
+    if (!existing) {
+      throw new NotFoundError('User not found');
     }
 
-    // Always update user_details for any provided fields
-    await query(
-      `UPDATE user_details 
-       SET first_name = COALESCE($1, first_name),
-           last_name = COALESCE($2, last_name),
-           phone = COALESCE($3, phone),
-           gstin = COALESCE($4, gstin),
-           address = COALESCE($5, address),
-           updated_at = NOW()
-       WHERE user_id = $6`,
-      [
-        updates.firstName || null,
-        updates.lastName || null,
-        updates.phone || null,
-        updates.gstin || null,
-        updates.address || null,
-        id
-      ]
-    );
+    const repoUpdates: any = { ...updates };
+    if (updates.password) {
+      repoUpdates.passwordHash = await bcrypt.hash(updates.password, 10);
+      delete repoUpdates.password;
+    }
+    if (updates.role) {
+      const roleId = await this.userRepository.getRoleIdByName(updates.role);
+      if (!roleId) throw new ValidationError(`Role ${updates.role} not found`);
+      repoUpdates.roleId = roleId;
+    }
 
+    await this.userRepository.update(id, repoUpdates);
     return this.getUserById(id);
   }
 
   async deleteUser(id: number): Promise<void> {
-    // Call stored procedure to delete user
-    const result = await query('CALL sp_delete_user($1, NULL::varchar, NULL::varchar)', [id]);
-
-    // Stored procedures don't return rows in pg, so we verify user existed before deletion
-    const userCheck = await query('SELECT user_id FROM users WHERE user_id = $1', [id]);
-    if (userCheck.rows.length > 0) {
-      throw new NotFoundError('Failed to delete user');
+    const existing = await this.userRepository.getById(id);
+    if (!existing) {
+      throw new NotFoundError('User not found');
     }
+    await this.userRepository.softDelete(id);
   }
 
   async changeUserRole(userId: number, newRole: UserRole): Promise<User> {
-    // Get role_id for the new role
-    const roleResult = await query('SELECT role_id FROM roles WHERE name = $1', [newRole]);
-    if (roleResult.rows.length === 0) {
+    const roleId = await this.userRepository.getRoleIdByName(newRole);
+    if (!roleId) {
       throw new ValidationError(`Role ${newRole} not found`);
     }
-    const roleId = roleResult.rows[0].role_id;
 
-    // Call stored procedure to change role
-    await query('CALL sp_change_user_role($1, $2, NULL::varchar, NULL::varchar)', [userId, roleId]);
-
+    await this.userRepository.update(userId, { roleId });
     return this.getUserById(userId);
   }
 }
 
 export default new UserService();
+

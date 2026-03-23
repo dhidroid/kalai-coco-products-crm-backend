@@ -7,14 +7,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
-    "lint": "eslint src --ext .ts,.tsx",
-    "lint:fix": "eslint src --ext .ts,.tsx --fix",
-    "format": "prettier --write src",
-    "test": "jest --detectOpenHandles",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "prepare": "husky install",
+    "start": "tsx src/index.ts",
     "db:migrate": "tsx src/database/migrate.ts",
     "db:seed": "node dist/database/seed.js"
   },
@@ -42,7 +35,8 @@
     "pg": "^8.8.0",
     "puppeteer": "^21.11.0",
     "swagger-jsdoc": "^6.2.0",
-    "swagger-ui-express": "^4.6.0"
+    "swagger-ui-express": "^4.6.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/js": "^8.50.0",

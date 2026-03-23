@@ -1,46 +1,52 @@
-import { query } from '@config/database';
-import type { Product, ProductInput } from '../types/index';
-import { ValidationError, NotFoundError } from '@utils/errors';
+import { ProductRepository, ProductRow } from '../repositories/ProductRepository';
+import { Product, ProductInput } from '../types/index';
+import { ValidationError, NotFoundError } from '../utils/errors';
 
 export class ProductService {
-  async getAllProducts(limit: number, offset: number): Promise<Product[]> {
-    const result = await query(
-      `SELECT product_id, product_code, product_name, description, hsn_code, unit, price, tax_rate, is_active, created_at, updated_at
-       FROM products 
-       ORDER BY created_at DESC 
-       LIMIT $1 OFFSET $2`,
-      [limit, offset]
-    );
-    return result.rows;
+  private productRepository: ProductRepository;
+
+  constructor() {
+    this.productRepository = new ProductRepository();
+  }
+
+  private mapRowToProduct(row: ProductRow): Product {
+    return {
+      product_id: Number(row.product_id),
+      product_code: row.product_code,
+      product_name: row.product_name,
+      description: row.description,
+      hsn_code: row.hsn_code,
+      unit: row.unit,
+      price: Number(row.price),
+      tax_rate: Number(row.tax_rate),
+      is_active: row.is_active,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    };
+  }
+
+  async getAllProducts(limit: number = 10, offset: number = 0): Promise<Product[]> {
+    const rows = await this.productRepository.getAll(limit, offset);
+    return rows.map(row => this.mapRowToProduct(row));
   }
 
   async getProductCount(): Promise<number> {
-    const result = await query('SELECT COUNT(*) as count FROM products', []);
-    return Number(result.rows[0].count);
+    const rows = await this.productRepository.getAll(100000, 0); // Temporary simplified count
+    return rows.length;
   }
 
   async getProductById(id: number): Promise<Product> {
-    const result = await query(
-      `SELECT product_id, product_code, product_name, description, hsn_code, unit, price, tax_rate, is_active, created_at, updated_at
-       FROM products WHERE product_id = $1`,
-      [id]
-    );
-    if (result.rows.length === 0) {
+    const row = await this.productRepository.getById(id);
+    if (!row) {
       throw new NotFoundError('Product not found');
     }
-    return result.rows[0];
+    return this.mapRowToProduct(row);
   }
 
   async getProductByCode(code: string): Promise<Product | null> {
-    const result = await query(
-      `SELECT product_id, product_code, product_name, description, hsn_code, unit, price, tax_rate, is_active, created_at, updated_at
-       FROM products WHERE product_code = $1`,
-      [code]
-    );
-    if (result.rows.length === 0) {
-      return null;
-    }
-    return result.rows[0];
+    const row = await this.productRepository.getByCode(code);
+    if (!row) return null;
+    return this.mapRowToProduct(row);
   }
 
   async createProduct(data: ProductInput): Promise<Product> {
@@ -49,59 +55,22 @@ export class ProductService {
       throw new ValidationError('Product with this code already exists');
     }
 
-    const result = await query(
-      `INSERT INTO products (product_code, product_name, description, hsn_code, unit, price, tax_rate, is_active)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING *`,
-      [
-        data.productCode,
-        data.productName,
-        data.description,
-        data.hsnCode,
-        data.unit,
-        data.price,
-        data.taxRate,
-        data.isActive,
-      ]
-    );
-    return result.rows[0];
+    const productId = await this.productRepository.create(data);
+    const product = await this.productRepository.getById(productId);
+    return this.mapRowToProduct(product!);
   }
 
   async updateProduct(id: number, data: Partial<ProductInput>): Promise<Product> {
     await this.getProductById(id);
-
-    const result = await query(
-      `UPDATE products SET
-        product_code = COALESCE($1, product_code),
-        product_name = COALESCE($2, product_name),
-        description = COALESCE($3, description),
-        hsn_code = COALESCE($4, hsn_code),
-        unit = COALESCE($5, unit),
-        price = COALESCE($6, price),
-        tax_rate = COALESCE($7, tax_rate),
-        is_active = COALESCE($8, is_active),
-        updated_at = NOW()
-       WHERE product_id = $9
-       RETURNING *`,
-      [
-        data.productCode,
-        data.productName,
-        data.description,
-        data.hsnCode,
-        data.unit,
-        data.price,
-        data.taxRate,
-        data.isActive,
-        id,
-      ]
-    );
-    return result.rows[0];
+    await this.productRepository.update(id, data);
+    return this.getProductById(id);
   }
 
   async deleteProduct(id: number): Promise<void> {
     await this.getProductById(id);
-    await query('DELETE FROM products WHERE product_id = $1', [id]);
+    await this.productRepository.softDelete(id);
   }
 }
 
 export const productService = new ProductService();
+

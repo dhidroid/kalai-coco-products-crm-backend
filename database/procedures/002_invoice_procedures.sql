@@ -143,15 +143,15 @@ BEGIN
         ih.invoice_id,
         ih.invoice_number,
         ih.invoice_date,
-        CONCAT(ud_bill.first_name, ' ', ud_bill.last_name),
-        u_bill.email,
-        ud_bill.phone,
-        ud_bill.gstin,
-        ud_bill.address,
-        CONCAT(ud_ship.first_name, ' ', ud_ship.last_name),
-        ud_ship.phone,
-        ud_ship.gstin,
-        ih.vehicle_number,
+        CONCAT(ud_bill.first_name, ' ', ud_bill.last_name)::VARCHAR,
+        u_bill.email::VARCHAR,
+        ud_bill.phone::VARCHAR,
+        ud_bill.gstin::VARCHAR,
+        ud_bill.address::TEXT,
+        CONCAT(ud_ship.first_name, ' ', ud_ship.last_name)::VARCHAR,
+        ud_ship.phone::VARCHAR,
+        ud_ship.gstin::VARCHAR,
+        ih.vehicle_number::VARCHAR,
         ih.date_of_supply,
         ih.subtotal,
         ih.sgst_rate,
@@ -241,7 +241,7 @@ BEGIN
         ih.invoice_id,
         ih.invoice_number,
         ih.invoice_date,
-        CONCAT(ud.first_name, ' ', ud.last_name),
+        CONCAT(ud.first_name, ' ', ud.last_name)::VARCHAR,
         ih.total_amount,
         ih.invoice_status,
         COUNT(ii.item_id)::INTEGER,
@@ -321,7 +321,7 @@ BEGIN
         il.file_size,
         il.mime_type,
         il.generated_at,
-        CONCAT(ud.first_name, ' ', ud.last_name)
+        CONCAT(ud.first_name, ' ', ud.last_name)::VARCHAR
     FROM
         invoice_logs il
         LEFT JOIN users u ON il.generated_by = u.user_id

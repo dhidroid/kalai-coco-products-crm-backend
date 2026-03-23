@@ -12,6 +12,7 @@ import userRoutes from '@routes/userRoutes';
 import priceLevelRoutes from '@routes/priceLevelRoutes';
 import { invoiceRoutes } from '@routes/invoiceRoutes';
 import { productRoutes } from '@routes/productRoutes';
+import productionRoutes from '@routes/productionRoutes';
 import { errorHandler } from '@middleware/errorHandler';
 import { logger } from '@utils/logger';
 
@@ -24,7 +25,23 @@ const frontendPublic = path.join(rootDir, 'frontend/public');
 const app: Express = express();
 
 // Middleware
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "https://unpkg.com"], // allow Lucide icons script
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        imgSrc: ["'self'", 'data:', 'blob:'],
+        fontSrc: ["'self'", 'data:', "https://fonts.gstatic.com"],
+        connectSrc: ["'self'"],
+        frameSrc: ["'none'"],
+        objectSrc: ["'none'"],
+      },
+    },
+    crossOriginEmbedderPolicy: false, // needed for Swagger UI
+  })
+);
 app.use(
   cors({
     origin: config.cors.origin,
@@ -75,6 +92,15 @@ app.get('/invoices', (_req: Request, res: Response) => {
   res.sendFile(path.join(frontendViews, 'invoices.html'));
 });
 
+app.get('/invoices/create', (_req: Request, res: Response) => {
+  res.sendFile(path.join(frontendViews, 'create-invoice.html'));
+});
+// invoice update
+app.get('/invoices/update', (_req: Request, res: Response) => {
+  res.sendFile(path.join(frontendViews, 'update-invoice.html'));
+});
+//invoice edit , status updatre, delete
+
 app.get('/products', (_req: Request, res: Response) => {
   res.sendFile(path.join(frontendViews, 'products.html'));
 });
@@ -83,12 +109,34 @@ app.get('/customers', (_req: Request, res: Response) => {
   res.sendFile(path.join(frontendViews, 'customers.html'));
 });
 
+app.get('/customers/create', (_req: Request, res: Response) => {
+  res.sendFile(path.join(frontendViews, 'create-customer.html'));
+});
+// customers update
+app.get('/customers/update', (_req: Request, res: Response) => {
+  res.sendFile(path.join(frontendViews, 'update-customer.html'));
+});
+
+// customer delete
+app.get('/customers/delete', (_req: Request, res: Response) => {
+  res.sendFile(path.join(frontendViews, 'delete-customer.html'));
+});
+
+app.get('/profile', (_req: Request, res: Response) => {
+  res.sendFile(path.join(frontendViews, 'profile.html'));
+});
+
+app.get('/productions', (_req: Request, res: Response) => {
+  res.sendFile(path.join(frontendViews, 'productions.html'));
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/price-levels', priceLevelRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/productions', productionRoutes);
 
 // Serve frontend for non-API routes (catch-all)
 app.get('*', (req: Request, res: Response) => {

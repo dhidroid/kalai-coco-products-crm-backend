@@ -469,7 +469,7 @@
                 <tbody>
                     {{#items}}
                     <tr>
-                        <td class="text-center">{{@index}}</td>
+                        <td class="text-center">{{index}}</td>
                         <td>{{description}}</td>
                         <td class="text-center"><span class="hsn-code">{{hsnCode}}</span></td>
                         <td class="text-right">{{quantity}} {{unit}}</td>
@@ -497,12 +497,12 @@
                     <span class="totals-label">CGST ({{cgstRate}}%)</span>
                     <span class="totals-value currency">{{cgstAmount}}</span>
                 </div>
-                {{#igstAmount}}
+                {{#hasIgst}}
                 <div class="totals-row tax">
                     <span class="totals-label">IGST ({{igstRate}}%)</span>
                     <span class="totals-value currency">{{igstAmount}}</span>
                 </div>
-                {{/igstAmount}}
+                {{/hasIgst}}
                 <div class="totals-row total">
                     <span class="totals-label">TOTAL AMOUNT</span>
                     <span class="totals-value currency">{{totalAmount}}</span>

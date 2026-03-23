@@ -5,53 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Invoices - Kalai Coco Products</title>
     <link rel="stylesheet" href="/css/styles.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <meta name="description" content="Invoicing module for Kalai Coco Products CRM. Create and manage professional invoices for your coco business." />
   </head>
   <body>
-    <div class="dashboard">
+    <div class="app-container">
+      <!-- Sidebar -->
       <aside class="sidebar">
-        <div class="sidebar-logo">
-          <h2>Kalai Coco</h2>
+        <div class="sidebar-header">
+          <h2>KALAI COCO</h2>
         </div>
         <ul class="sidebar-menu">
-          <li>
-            <a href="/dashboard" data-page="dashboard"
-              ><span class="icon">📊</span> <span>Dashboard</span></a
-            >
-          </li>
-          <li>
-            <a href="/invoices" class="active" data-page="invoices"
-              ><span class="icon">📄</span> <span>Invoices</span></a
-            >
-          </li>
-          <li>
-            <a href="/products" data-page="products"
-              ><span class="icon">📦</span> <span>Products</span></a
-            >
-          </li>
-          <li>
-            <a href="/customers" data-page="customers"
-              ><span class="icon">👥</span> <span>Customers</span></a
-            >
-          </li>
-          <li>
-            <a href="#logout" id="logout-btn"><span class="icon">🚪</span> <span>Logout</span></a>
-          </li>
+          <li><a href="/dashboard" data-page="dashboard"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a></li>
+          <li><a href="/invoices" class="active" data-page="invoices"><i data-lucide="file-text"></i> <span>Invoices</span></a></li>
+          <li><a href="/productions" data-page="productions"><i data-lucide="factory"></i> <span>Production</span></a></li>
+          <li><a href="/products" data-page="products"><i data-lucide="package"></i> <span>Products</span></a></li>
+          <li><a href="/customers" data-page="customers"><i data-lucide="users"></i> <span>Customers</span></a></li>
+          <li><a href="/profile" data-page="profile"><i data-lucide="user"></i> <span>Profile</span></a></li>
         </ul>
+        <div class="sidebar-footer">
+          <a href="#" id="logout-btn"><i data-lucide="log-out"></i> <span>Logout</span></a>
+        </div>
       </aside>
 
-      <main class="main-content">
-        <header class="header">
-          <h1>Invoices</h1>
-          <div class="header-actions">
-            <button class="btn btn-primary" onclick="openInvoiceModal()">+ New Invoice</button>
+      <!-- Main Content -->
+      <main class="main-wrapper">
+        <header>
+          <div class="header-left">
+            <h1>Invoices</h1>
+          </div>
+          <div class="header-right">
+            <button class="btn btn-primary" onclick="window.location.href='/invoices/create'">
+              <i data-lucide="plus"></i> Create Invoice
+            </button>
+            <div class="user-profile" onclick="window.location.href='/profile'">
+              <div class="user-avatar" id="user-avatar">U</div>
+              <span id="user-name">User Name</span>
+            </div>
           </div>
         </header>
 
-        <div id="content-area">
+        <section class="content-area">
           <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">All Invoices</h3>
-            </div>
             <div class="table-container">
               <table>
                 <thead>
@@ -65,139 +60,122 @@
                   </tr>
                 </thead>
                 <tbody id="invoices-table-body">
-                  <tr>
-                    <td colspan="6">
-                      <div class="loading"><div class="spinner"></div></div>
-                    </td>
-                  </tr>
+                  <!-- JS Injected Rows -->
                 </tbody>
               </table>
             </div>
-            <div class="pagination" id="invoices-pagination"></div>
           </div>
-        </div>
+        </section>
       </main>
     </div>
 
     <!-- Invoice Modal -->
-    <div class="modal-overlay" id="invoice-modal">
-      <div class="modal" style="max-width: 800px">
+    <div class="modal-backdrop" id="invoice-modal">
+      <div class="modal" style="max-width: 800px;">
         <div class="modal-header">
-          <h3>Create Invoice</h3>
-          <button class="modal-close" onclick="closeModal('invoice-modal')">&times;</button>
+          <h3 id="invoice-modal-title">Create New Invoice</h3>
+          <button class="btn btn-sm btn-secondary" onclick="closeModal('invoice-modal')"><i data-lucide="x"></i></button>
         </div>
         <div class="modal-body">
           <form id="invoice-form">
             <div class="form-row">
               <div class="form-group">
-                <label for="invoice-number">Invoice Number</label>
-                <input type="text" id="invoice-number" name="invoiceNumber" required />
+                <label>Invoice Number</label>
+                <input type="text" id="invoice-number" name="invoiceNumber" class="form-control" required readonly />
               </div>
               <div class="form-group">
-                <label for="invoice-date">Invoice Date</label>
-                <input type="date" id="invoice-date" name="invoiceDate" required />
+                <label>Invoice Date</label>
+                <input type="date" id="invoice-date" name="invoiceDate" class="form-control" required />
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label for="bill-to">Bill To (Customer)</label>
-                <select id="bill-to" name="billToUserId" required>
-                  <option value="">Select Customer</option>
-                </select>
+                <label>Customer (Bill To)</label>
+                <select id="bill-to" name="billToUserId" class="form-control" required></select>
               </div>
               <div class="form-group">
-                <label for="ship-to">Ship To (Customer)</label>
-                <select id="ship-to" name="shipToUserId">
-                  <option value="">Same as Bill To</option>
-                </select>
+                <label>Ship To (Optional)</label>
+                <select id="ship-to" name="shipToUserId" class="form-control"></select>
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label for="vehicle-number">Vehicle Number</label>
-                <input
-                  type="text"
-                  id="vehicle-number"
-                  name="vehicleNumber"
-                  placeholder="TN 00 AB 1234"
-                />
+                <label>Vehicle Number</label>
+                <input type="text" id="vehicle-number" name="vehicleNumber" class="form-control" placeholder="e.g. TN-38-AB-1234" />
               </div>
               <div class="form-group">
-                <label for="date-of-supply">Date of Supply</label>
-                <input type="date" id="date-of-supply" name="dateOfSupply" />
+                <label>Date of Supply</label>
+                <input type="date" id="date-of-supply" name="dateOfSupply" class="form-control" />
               </div>
             </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label for="sgst-rate">SGST Rate (%)</label>
-                <input type="number" id="sgst-rate" name="sgstRate" value="9.0" step="0.01" />
-              </div>
-              <div class="form-group">
-                <label for="cgst-rate">CGST Rate (%)</label>
-                <input type="number" id="cgst-rate" name="cgstRate" value="9.0" step="0.01" />
-              </div>
-              <div class="form-group">
-                <label for="igst-rate">IGST Rate (%)</label>
-                <input type="number" id="igst-rate" name="igstRate" value="0.0" step="0.01" />
-              </div>
+            <div style="margin: 24px 0 12px; font-weight: 600; font-size: 1rem; color: var(--text-primary); border-bottom: 2px solid var(--primary-subtle); padding-bottom: 8px;">
+              Invoice Items
             </div>
-
-            <h4 style="margin: 20px 0 12px">Invoice Items</h4>
             <div id="invoice-items">
               <div class="form-row item-row">
-                <div class="form-group" style="flex: 2">
+                <div class="form-group" style="flex: 2;">
                   <label>Product</label>
-                  <select name="productId" class="item-product" required>
-                    <option value="">Select Product</option>
-                  </select>
+                  <select name="productId" class="form-control item-product" required onchange="onProductChange(this)"></select>
                 </div>
                 <div class="form-group">
                   <label>Quantity</label>
-                  <input
-                    type="number"
-                    name="quantity"
-                    class="item-quantity"
-                    min="1"
-                    value="1"
-                    required
-                  />
+                  <input type="number" name="quantity" class="form-control item-quantity" min="1" value="1" required />
                 </div>
                 <div class="form-group">
-                  <label>Unit Price</label>
-                  <input
-                    type="number"
-                    name="unitPrice"
-                    class="item-price"
-                    min="0"
-                    step="0.01"
-                    required
-                  />
+                  <label>Price</label>
+                  <input type="number" name="unitPrice" class="form-control item-price" min="0" step="0.01" required />
                 </div>
-                <div class="form-group">
-                  <label>&nbsp;</label>
-                  <button type="button" class="btn btn-danger btn-sm" onclick="removeItem(this)">
-                    Remove
-                  </button>
+                <div class="form-group" style="padding-top: 28px;">
+                   <!-- Space for delete icon -->
                 </div>
               </div>
             </div>
-
-            <button type="button" class="btn btn-secondary btn-sm mt-4" onclick="addItem()">
-              + Add Item
+            <button type="button" class="btn btn-secondary btn-sm" onclick="addItem()" style="margin-top: 12px;">
+              <i data-lucide="plus"></i> Add Item
             </button>
+
+            <div style="margin-top: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+              <div class="form-group"><label>SGST Rate (%)</label><input type="number" name="sgstRate" value="9.00" class="form-control" step="0.01" /></div>
+              <div class="form-group"><label>CGST Rate (%)</label><input type="number" name="cgstRate" value="9.00" class="form-control" step="0.01" /></div>
+              <div class="form-group"><label>IGST Rate (%)</label><input type="number" name="igstRate" value="0.00" class="form-control" step="0.01" /></div>
+            </div>
           </form>
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" onclick="closeModal('invoice-modal')">Cancel</button>
-          <button class="btn btn-primary" onclick="submitInvoice()">Create Invoice</button>
+          <button type="submit" class="btn btn-primary" form="invoice-form">Create Invoice</button>
         </div>
       </div>
     </div>
 
+    <!-- View Invoice Modal -->
+    <div class="modal-backdrop" id="view-invoice-modal">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Invoice Details</h3>
+                <button class="btn btn-sm btn-secondary" onclick="closeModal('view-invoice-modal')"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body" id="view-invoice-body">
+                <!-- Content will be injected by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('view-invoice-modal')">Close</button>
+                <button class="btn btn-primary" id="view-modal-download-btn">Download PDF</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/js/api.js"></script>
     <script src="/js/invoices.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
+      });
+    </script>
   </body>
 </html>

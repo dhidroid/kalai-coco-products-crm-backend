@@ -3,13 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Products - Kalai Coco Products</title>
+    <title>Productions - Kalai Coco Products</title>
     <link rel="stylesheet" href="/css/styles.css" />
     <script src="https://unpkg.com/lucide@latest"></script>
-    <meta name="description" content="Manage your product inventory for Kalai Coco Products. Add and edit products with custom pricing and tax rates." />
+    <meta name="description" content="Production tracking module for Kalai Coco Products. Log and manage the production of coco fiber, peat, and other products." />
   </head>
   <body>
     <div class="app-container">
+      <!-- Sidebar -->
       <aside class="sidebar">
         <div class="sidebar-header">
           <h2>KALAI COCO</h2>
@@ -17,8 +18,8 @@
         <ul class="sidebar-menu">
           <li><a href="/dashboard" data-page="dashboard"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a></li>
           <li><a href="/invoices" data-page="invoices"><i data-lucide="file-text"></i> <span>Invoices</span></a></li>
-          <li><a href="/productions" data-page="productions"><i data-lucide="factory"></i> <span>Production</span></a></li>
-          <li><a href="/products" class="active" data-page="products"><i data-lucide="package"></i> <span>Products</span></a></li>
+          <li><a href="/productions" class="active" data-page="productions"><i data-lucide="factory"></i> <span>Production</span></a></li>
+          <li><a href="/products" data-page="products"><i data-lucide="package"></i> <span>Products</span></a></li>
           <li><a href="/customers" data-page="customers"><i data-lucide="users"></i> <span>Customers</span></a></li>
           <li><a href="/profile" data-page="profile"><i data-lucide="user"></i> <span>Profile</span></a></li>
         </ul>
@@ -27,14 +28,15 @@
         </div>
       </aside>
 
+      <!-- Main Content -->
       <main class="main-wrapper">
         <header>
           <div class="header-left">
-            <h1>Products</h1>
+            <h1>Production Logs</h1>
           </div>
           <div class="header-right">
-            <button class="btn btn-primary" onclick="openProductModal()">
-              <i data-lucide="plus"></i> Add Product
+            <button class="btn btn-primary" onclick="openProductionModal()">
+              <i data-lucide="plus"></i> New Production Log
             </button>
             <div class="user-profile" onclick="window.location.href='/profile'">
               <div class="user-avatar" id="user-avatar">U</div>
@@ -49,18 +51,16 @@
               <table>
                 <thead>
                   <tr>
-                    <th>Code</th>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>HSN Code</th>
+                    <th>Date</th>
+                    <th>Batch #</th>
+                    <th>Product</th>
+                    <th>Quantity</th>
                     <th>Unit</th>
-                    <th>Price</th>
-                    <th>Tax Rate</th>
-                    <th>Status</th>
+                    <th>Notes</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
-                <tbody id="products-table-body">
+                <tbody id="productions-table-body">
                   <!-- JS Injected Rows -->
                 </tbody>
               </table>
@@ -70,77 +70,65 @@
       </main>
     </div>
 
-    <!-- Product Modal -->
-    <div class="modal-backdrop" id="product-modal">
+    <!-- Production Modal -->
+    <div class="modal-backdrop" id="production-modal">
       <div class="modal">
         <div class="modal-header">
-          <h3 id="product-modal-title">Add/Edit Product</h3>
-          <button class="btn btn-sm btn-secondary" onclick="closeModal('product-modal')"><i data-lucide="x"></i></button>
+          <h3 id="production-modal-title">Log New Production</h3>
+          <button class="btn btn-sm btn-secondary" onclick="closeModal('production-modal')"><i data-lucide="x"></i></button>
         </div>
         <div class="modal-body">
-          <form id="product-form">
-            <input type="hidden" id="product-id" name="productId" />
+          <form id="production-form">
+            <input type="hidden" id="production-id-hidden" name="id">
             <div class="form-row">
               <div class="form-group">
-                <label>Product Code</label>
-                <input type="text" id="product-code" name="productCode" class="form-control" required placeholder="P-001" />
+                <label>Production Date</label>
+                <input type="date" id="production-date" name="productionDate" class="form-control" required />
               </div>
               <div class="form-group">
-                <label>Product Name</label>
-                <input type="text" id="product-name" name="productName" class="form-control" required placeholder="Coir Fiber 1kg" />
+                <label>Batch Number</label>
+                <input type="text" id="batch-number" name="batchNumber" class="form-control" required placeholder="B-2024-001" />
               </div>
             </div>
 
             <div class="form-group">
-              <label>Description (Optional)</label>
-              <textarea id="product-description" name="description" class="form-control" placeholder="Brief product description..."></textarea>
+              <label>Product</label>
+              <select id="product-id" name="productId" class="form-control" required>
+                <option value="">Select Product</option>
+              </select>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label>HSN Code</label>
-                <input type="text" id="hsn-code" name="hsnCode" class="form-control" placeholder="1234" />
+                <label>Quantity</label>
+                <input type="number" id="production-quantity" name="quantity" class="form-control" required step="0.01" value="0.00" />
               </div>
               <div class="form-group">
                 <label>Unit</label>
-                <select id="unit" name="unit" class="form-control">
+                <select id="production-unit" name="unit" class="form-control" required>
                   <option value="KG">Kilogram (KG)</option>
                   <option value="PCS">Piece (PCS)</option>
                   <option value="LTR">Liter (LTR)</option>
-                  <option value="BOX">Box (BOX)</option>
                   <option value="BDL">Bundle (BDL)</option>
                 </select>
               </div>
             </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label>Price (₹)</label>
-                <input type="number" id="price" name="price" class="form-control" required step="0.01" />
-              </div>
-              <div class="form-group">
-                <label>Tax Rate (%)</label>
-                <input type="number" id="tax-rate" name="taxRate" class="form-control" value="18.00" step="0.01" />
-              </div>
-            </div>
-
             <div class="form-group">
-              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                <input type="checkbox" id="is-active" name="isActive" checked style="width: 18px; height: 18px;" />
-                Active Product
-              </label>
+              <label>Notes (Optional)</label>
+              <textarea id="production-notes" name="notes" class="form-control" placeholder="Production quality, shift info, etc."></textarea>
             </div>
           </form>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" onclick="closeModal('product-modal')">Cancel</button>
-          <button class="btn btn-primary" onclick="submitProduct()">Save Product</button>
+          <button class="btn btn-secondary" onclick="closeModal('production-modal')">Cancel</button>
+          <button class="btn btn-primary" onclick="submitProduction()">Save Log</button>
         </div>
       </div>
     </div>
 
     <script src="/js/api.js"></script>
-    <script src="/js/products.js"></script>
+    <script src="/js/productions.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         if (typeof lucide !== 'undefined') {

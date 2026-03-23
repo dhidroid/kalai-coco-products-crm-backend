@@ -5,7 +5,10 @@ import { verifyToken } from '@utils/jwt';
 import { UnauthorizedError, ForbiddenError } from '@utils/errors';
 
 export const authenticate: RequestHandler = (req: AuthRequest, _res: Response, next: NextFunction) => {
-  const token = req.headers.authorization?.split(' ')[1];
+  let token = req.headers.authorization?.split(' ')[1];
+  if (!token && req.query.token) {
+    token = req.query.token as string;
+  }
 
   if (!token) {
     throw new UnauthorizedError('No token provided');
@@ -35,7 +38,10 @@ export const authorize = (...roles: UserRole[]): RequestHandler => {
 };
 
 export const optionalAuth: RequestHandler = (req: AuthRequest, _res: Response, next: NextFunction) => {
-  const token = req.headers.authorization?.split(' ')[1];
+  let token = req.headers.authorization?.split(' ')[1];
+  if (!token && req.query.token) {
+    token = req.query.token as string;
+  }
 
   if (token) {
     try {

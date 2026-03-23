@@ -5,57 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Customers - Kalai Coco Products</title>
     <link rel="stylesheet" href="/css/styles.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <meta name="description" content="Manage your customer relations and profiles. Quick access to customer contact details and GST info." />
   </head>
   <body>
-    <div class="dashboard">
+    <div class="app-container">
       <aside class="sidebar">
-        <div class="sidebar-logo">
-          <h2>Kalai Coco</h2>
+        <div class="sidebar-header">
+          <h2>KALAI COCO</h2>
         </div>
         <ul class="sidebar-menu">
-          <li>
-            <a href="/dashboard" data-page="dashboard"
-              ><span class="icon">📊</span> <span>Dashboard</span></a
-            >
-          </li>
-          <li>
-            <a href="/invoices" data-page="invoices"
-              ><span class="icon">📄</span> <span>Invoices</span></a
-            >
-          </li>
-          <li>
-            <a href="/products" data-page="products"
-              ><span class="icon">📦</span> <span>Products</span></a
-            >
-          </li>
-          <li>
-            <a href="/customers" class="active" data-page="customers"
-              ><span class="icon">👥</span> <span>Customers</span></a
-            >
-          </li>
-          <li>
-            <a href="#logout" id="logout-btn"><span class="icon">🚪</span> <span>Logout</span></a>
-          </li>
+          <li><a href="/dashboard" data-page="dashboard"><i data-lucide="layout-dashboard"></i> <span>Dashboard</span></a></li>
+          <li><a href="/invoices" data-page="invoices"><i data-lucide="file-text"></i> <span>Invoices</span></a></li>
+          <li><a href="/productions" data-page="productions"><i data-lucide="factory"></i> <span>Production</span></a></li>
+          <li><a href="/products" data-page="products"><i data-lucide="package"></i> <span>Products</span></a></li>
+          <li><a href="/customers" class="active" data-page="customers"><i data-lucide="users"></i> <span>Customers</span></a></li>
+          <li><a href="/profile" data-page="profile"><i data-lucide="user"></i> <span>Profile</span></a></li>
         </ul>
+        <div class="sidebar-footer">
+          <a href="#" id="logout-btn"><i data-lucide="log-out"></i> <span>Logout</span></a>
+        </div>
       </aside>
 
-      <main class="main-content">
-        <header class="header">
-          <h1>Customers</h1>
-          <div class="header-actions">
-            <div class="user-info">
-              <span id="user-name">User</span>
+      <main class="main-wrapper">
+        <header>
+          <div class="header-left">
+            <h1>Customers</h1>
+          </div>
+          <div class="header-right">
+            <button class="btn btn-primary" onclick="openCustomerModal()">
+              <i data-lucide="plus"></i> Add Customer
+            </button>
+            <div class="user-profile" onclick="window.location.href='/profile'">
               <div class="user-avatar" id="user-avatar">U</div>
+              <span id="user-name">User Name</span>
             </div>
-            <button class="btn btn-primary btn-sm" onclick="openCustomerModal()">+ Add Customer</button>
           </div>
         </header>
 
-        <div id="content-area">
+        <section class="content-area">
           <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">All Customers</h3>
-            </div>
             <div class="table-container">
               <table>
                 <thead>
@@ -70,129 +59,91 @@
                   </tr>
                 </thead>
                 <tbody id="customers-table-body">
-                  <tr>
-                    <td colspan="7">
-                      <div class="loading"><div class="spinner"></div></div>
-                    </td>
-                  </tr>
+                  <!-- JS Injected Rows -->
                 </tbody>
               </table>
             </div>
           </div>
-        </div>
+        </section>
       </main>
     </div>
 
     <!-- Customer Modal -->
-    <div class="modal-overlay" id="customer-modal">
+    <div class="modal-backdrop" id="customer-modal">
       <div class="modal">
         <div class="modal-header">
-          <h3 id="customer-modal-title">Add Customer</h3>
-          <button class="modal-close" onclick="closeModal('customer-modal')">&times;</button>
+          <h3 id="customer-modal-title">Add/Edit Customer</h3>
+          <button class="btn btn-sm btn-secondary" onclick="closeModal('customer-modal')"><i data-lucide="x"></i></button>
         </div>
         <div class="modal-body">
           <form id="customer-form">
             <input type="hidden" id="customer-id" name="customerId" />
-
             <div class="form-row">
               <div class="form-group">
-                <label for="customer-first-name">First Name</label>
-                <input
-                  type="text"
-                  id="customer-first-name"
-                  name="firstName"
-                  placeholder="e.g., Ravi"
-                  required
-                />
+                <label>First Name</label>
+                <input type="text" id="customer-first-name" name="firstName" class="form-control" required placeholder="John" />
               </div>
               <div class="form-group">
-                <label for="customer-last-name">Last Name</label>
-                <input
-                  type="text"
-                  id="customer-last-name"
-                  name="lastName"
-                  placeholder="e.g., Kumar"
-                  required
-                />
+                <label>Last Name</label>
+                <input type="text" id="customer-last-name" name="lastName" class="form-control" required placeholder="Doe" />
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label for="customer-email">Email</label>
-                <input
-                  type="email"
-                  id="customer-email"
-                  name="email"
-                  placeholder="e.g., ravi@example.com"
-                  required
-                />
+                <label>Email Address</label>
+                <input type="email" id="customer-email" name="email" class="form-control" required placeholder="john@example.com" />
               </div>
               <div class="form-group">
-                <label for="customer-phone">Phone</label>
-                <input
-                  type="text"
-                  id="customer-phone"
-                  name="phone"
-                  placeholder="e.g., 9876543210"
-                />
+                <label>Phone Number</label>
+                <input type="tel" id="customer-phone" name="phone" class="form-control" placeholder="+91 9876543210" />
               </div>
             </div>
 
             <div class="form-group">
-              <label for="customer-gstin">GSTIN</label>
-              <input
-                type="text"
-                id="customer-gstin"
-                name="gstin"
-                placeholder="e.g., 33AAAAA0000A1Z5"
-              />
+              <label>GSTIN (Optional)</label>
+              <input type="text" id="customer-gstin" name="gstin" class="form-control" placeholder="12ABCDE1234F1Z1" />
             </div>
 
             <div class="form-group">
-              <label for="customer-address">Address</label>
-              <textarea
-                id="customer-address"
-                name="address"
-                rows="3"
-                placeholder="Full address..."
-              ></textarea>
+              <label>Address</label>
+              <textarea id="customer-address" name="address" class="form-control" placeholder="Full billing address..."></textarea>
             </div>
 
             <div class="form-group" id="password-group">
-              <label for="customer-password">Password <span style="color: var(--secondary-color); font-weight: 400;">(required for new customers)</span></label>
-              <input
-                type="password"
-                id="customer-password"
-                name="password"
-                placeholder="Min. 8 characters"
-              />
+              <label>Password <span>(Required for new account)</span></label>
+              <input type="password" id="customer-password" name="password" class="form-control" placeholder="Set a temporary password" />
             </div>
           </form>
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" onclick="closeModal('customer-modal')">Cancel</button>
-          <button class="btn btn-primary btn-sm" onclick="submitCustomer()">Save Customer</button>
+          <button class="btn btn-primary" onclick="submitCustomer()">Save Customer</button>
         </div>
       </div>
     </div>
 
-    <!-- View Customer Modal -->
-    <div class="modal-overlay" id="view-customer-modal">
+    <!-- View Modal -->
+    <div class="modal-backdrop" id="view-customer-modal">
       <div class="modal">
         <div class="modal-header">
           <h3>Customer Details</h3>
-          <button class="modal-close" onclick="closeModal('view-customer-modal')">&times;</button>
+          <button class="btn btn-sm btn-secondary" onclick="closeModal('view-customer-modal')"><i data-lucide="x"></i></button>
         </div>
         <div class="modal-body" id="view-customer-body">
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" onclick="closeModal('view-customer-modal')">Close</button>
+          <!-- JS Injected Body -->
         </div>
       </div>
     </div>
 
     <script src="/js/api.js"></script>
     <script src="/js/customers.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
+      });
+    </script>
   </body>
 </html>

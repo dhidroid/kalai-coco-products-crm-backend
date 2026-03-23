@@ -19,17 +19,17 @@ async function getBrowser(): Promise<Browser> {
       // Dynamic import for ESM compatibility
       const puppeteer = await import('puppeteer');
       browser = await puppeteer.default.launch({
-        headless: 'new',
+        headless: true,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
           '--disable-gpu',
-          '--single-process',
         ],
       });
       logger.info('Puppeteer browser initialized');
     } catch (error) {
-      logger.error(`Failed to launch browser: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      logger.error('Failed to launch browser: ', error);
       throw new InternalServerError('Failed to initialize PDF generator');
     }
   }
