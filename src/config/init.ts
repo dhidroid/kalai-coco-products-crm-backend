@@ -50,7 +50,23 @@ export async function initializeDatabase(): Promise<void> {
       }
     }
 
-    // 3. Ensure default roles exist (idempotent)
+    // 3. Check for invoice function fixes (005_fix_invoice_functions migration)
+    const functionCheck = await query(`
+      SELECT COUNT(*) FROM information_schema.columns 
+      WHERE table_name = 'fn_get_invoice_with_items' AND column_name = 'ship_to_address'
+    `);
+    
+    if (parseInt(functionCheck.rows[0].count) === 0) {
+      logger.info('Applying invoice function fixes (005_fix_invoice_functions)...');
+      const fixFile = path.resolve(__dirname, '../../database/migrations/005_fix_invoice_functions.sql');
+      if (fs.existsSync(fixFile)) {
+        const sql = fs.readFileSync(fixFile, 'utf-8');
+        await query(sql);
+        logger.info('Invoice function fixes applied');
+      }
+    }
+
+    // 4. Ensure default roles exist (idempotent)
     await query(`
       INSERT INTO roles (name) 
       VALUES ('Admin'), ('Super Admin'), ('Employee')
