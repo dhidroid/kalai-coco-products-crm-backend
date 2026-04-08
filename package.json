@@ -8,6 +8,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "tsx src/index.ts",
+    "render:build": "NODE_ENV=production npm install --include=optional && npm run build",
+    "render:start": "NODE_ENV=production node dist/index.js",
     "db:migrate": "tsx src/database/migrate.ts",
     "db:seed": "node dist/database/seed.js",
     "postinstall": "node -e \"if(process.env.NODE_ENV === 'production') { console.log('Skipping chromium install'); } else { console.log('Dev environment'); }\""

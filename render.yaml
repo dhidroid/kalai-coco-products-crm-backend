@@ -1,0 +1,47 @@
+services:
+  - type: web
+    name: kalai-coco-api
+    env: node
+    plan: standard
+    
+    # Build configuration
+    buildCommand: |
+      npm ci --include=optional && \
+      export NODE_ENV=production && \
+      npm run build
+    
+    # Start command
+    startCommand: npm start
+    
+    # Environment variables
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PUPPETEER_SKIP_DOWNLOAD
+        value: "true"
+      - key: PUPPETEER_CACHE_DIR
+        value: /tmp/puppeteer
+      - key: PORT
+        value: "3000"
+    
+    # Health check
+    healthCheckPath: /
+    healthCheckInterval: 300
+    
+    # Disk for persistent cache
+    disk:
+      name: puppeteer-cache
+      mountPath: /tmp/puppeteer
+      sizeGB: 1
+    
+    # Autoscaling
+    maxInstances: 3
+    minInstances: 1
+    
+    # Build settings
+    buildFilter:
+      paths:
+        - src/**
+        - package.json
+        - package-lock.json
+        - tsconfig.json

@@ -14,16 +14,50 @@ let browser: Browser | null = null;
  * Get the correct Chrome/Chromium executable path
  */
 async function getChromiumPath(): Promise<string | undefined> {
-  // For Render and other production environments
-  if (process.env.NODE_ENV === 'production') {
+  // Check for explicit environment variable first
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+    logger.info(`Using PUPPETEER_EXECUTABLE_PATH: ${process.env.PUPPETEER_EXECUTABLE_PATH}`);
+    return process.env.PUPPETEER_EXECUTABLE_PATH;
+  }
+
+  try {
+    // Try to use @sparticuz/chromium first (works in production and dev)
+    const chromium = await import('@sparticuz/chromium');
+    // executablePath is an async function, not a property
+    if (typeof chromium.executablePath === 'function') {
+      const path = await chromium.executablePath();
+      if (path) {
+        logger.info('Using @sparticuz/chromium');
+        return path;
+      }
+    }
+  } catch (error) {
+    logger.warn('Sparticuz chromium not available:', error instanceof Error ? error.message : String(error));
+  }
+
+  // Fallback: try common system Chrome/Chromium paths
+  const commonPaths = [
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+  ];
+
+  for (const path of commonPaths) {
     try {
-      const chromium = await import('@sparticuz/chromium');
-      return chromium.executablePath;
-    } catch (error) {
-      logger.warn('Sparticuz chromium not available, using default Chrome');
+      const fs = await import('fs');
+      if (fs.existsSync(path)) {
+        logger.info(`Found Chrome at: ${path}`);
+        return path;
+      }
+    } catch {
+      // Continue to next path
     }
   }
-  // For development, puppeteer-core will find system Chrome
+
   return undefined;
 }
 
@@ -38,7 +72,16 @@ async function getBrowser(): Promise<Browser> {
       
       const executablePath = await getChromiumPath();
       
+      if (!executablePath) {
+        throw new Error(
+          'No Chrome/Chromium executable found. ' +
+          'For development: sudo apt install chromium-browser (Linux) or brew install chromium (macOS)\n' +
+          'Or set PUPPETEER_EXECUTABLE_PATH environment variable.'
+        );
+      }
+      
       const launchConfig: any = {
+        executablePath,
         headless: true,
         args: [
           '--no-sandbox',
@@ -47,11 +90,6 @@ async function getBrowser(): Promise<Browser> {
           '--disable-gpu',
         ],
       };
-      
-      // Only set executablePath if we found one
-      if (executablePath) {
-        launchConfig.executablePath = executablePath;
-      }
       
       browser = await puppeteer.default.launch(launchConfig);
       logger.info('Puppeteer browser initialized');
