@@ -135,14 +135,27 @@ export async function htmlToPdf(htmlContent: string, options?: any): Promise<Buf
       ...options,
     });
 
+    if (!pdfBuffer) {
+      throw new Error('PDF generation returned empty buffer');
+    }
+
     logger.info('PDF generated successfully');
+    
+    // Properly convert to Buffer if it's a Uint8Array
+    if (Buffer.isBuffer(pdfBuffer)) {
+      return pdfBuffer;
+    }
     return Buffer.from(pdfBuffer);
   } catch (error) {
     logger.error(`PDF generation error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     throw new InternalServerError('Failed to generate PDF');
   } finally {
     if (page) {
-      await page.close();
+      try {
+        await page.close();
+      } catch (closeError) {
+        logger.warn(`Error closing PDF page: ${closeError instanceof Error ? closeError.message : 'Unknown error'}`);
+      }
     }
   }
 }
