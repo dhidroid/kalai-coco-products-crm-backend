@@ -23,16 +23,39 @@ async function getChromiumPath(): Promise<string | undefined> {
   try {
     // Try to use @sparticuz/chromium first (works in production and dev)
     const chromium = await import('@sparticuz/chromium');
-    // executablePath is an async function, not a property
+    
+    // Handle different export styles
+    let path: string | undefined;
+    
+    // Try executablePath as function (async)
     if (typeof chromium.executablePath === 'function') {
-      const path = await chromium.executablePath();
-      if (path) {
-        logger.info('Using @sparticuz/chromium');
-        return path;
+      try {
+        path = await chromium.executablePath();
+      } catch (e) {
+        logger.warn('executablePath() call failed:', e instanceof Error ? e.message : String(e));
       }
     }
+    
+    // Try executablePath as property
+    if (!path && chromium.executablePath && typeof chromium.executablePath !== 'function') {
+      path = chromium.executablePath;
+    }
+    
+    // Try default export
+    if (!path && typeof chromium.default?.executablePath === 'function') {
+      try {
+        path = await chromium.default.executablePath();
+      } catch (e) {
+        logger.warn('default.executablePath() call failed:', e instanceof Error ? e.message : String(e));
+      }
+    }
+    
+    if (path) {
+      logger.info(`Using @sparticuz/chromium: ${path}`);
+      return path;
+    }
   } catch (error) {
-    logger.warn('Sparticuz chromium not available:', error instanceof Error ? error.message : String(error));
+    logger.warn('Sparticuz chromium import failed:', error instanceof Error ? error.message : String(error));
   }
 
   // Fallback: try common system Chrome/Chromium paths
@@ -46,11 +69,11 @@ async function getChromiumPath(): Promise<string | undefined> {
     'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
   ];
 
+  const fs = await import('fs');
   for (const path of commonPaths) {
     try {
-      const fs = await import('fs');
       if (fs.existsSync(path)) {
-        logger.info(`Found Chrome at: ${path}`);
+        logger.info(`Found system Chrome at: ${path}`);
         return path;
       }
     } catch {
@@ -73,16 +96,25 @@ async function getBrowser(): Promise<Browser> {
       const executablePath = await getChromiumPath();
       
       if (!executablePath) {
-        throw new Error(
-          'No Chrome/Chromium executable found. ' +
-          'For development: sudo apt install chromium-browser (Linux) or brew install chromium (macOS)\n' +
-          'Or set PUPPETEER_EXECUTABLE_PATH environment variable.'
-        );
+        const installInstructions = `
+No Chrome/Chromium executable found. Please install it with one of these methods:
+
+For Linux (Ubuntu/Debian):
+  sudo apt-get update && sudo apt-get install -y chromium-browser
+
+For macOS:
+  brew install chromium
+
+For development, you can also set the PUPPETEER_EXECUTABLE_PATH environment variable:
+  export PUPPETEER_EXECUTABLE_PATH=/path/to/chromium
+`;
+        logger.error(installInstructions);
+        throw new Error(installInstructions);
       }
       
       const launchConfig: any = {
         executablePath,
-        headless: true,
+        headless: 'new',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -92,10 +124,10 @@ async function getBrowser(): Promise<Browser> {
       };
       
       browser = await puppeteer.default.launch(launchConfig);
-      logger.info('Puppeteer browser initialized');
+      logger.info('Puppeteer browser initialized successfully');
     } catch (error) {
       logger.error('Failed to launch browser: ', error);
-      throw new InternalServerError('Failed to initialize PDF generator');
+      throw new InternalServerError('Failed to initialize PDF generator - Chromium not available');
     }
   }
   return browser;
