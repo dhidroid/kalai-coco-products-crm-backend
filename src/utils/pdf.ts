@@ -1,6 +1,6 @@
 /**
  * PDF Generation Utility
- * Converts HTML to PDF using Puppeteer
+ * Converts HTML to PDF using Puppeteer with Chromium
  */
 import { logger } from './logger';
 import { InternalServerError } from './errors';
@@ -11,14 +11,34 @@ type Page = any;
 let browser: Browser | null = null;
 
 /**
+ * Get the correct Chrome/Chromium executable path
+ */
+async function getChromiumPath(): Promise<string | undefined> {
+  // For Render and other production environments
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      const chromium = await import('@sparticuz/chromium');
+      return chromium.executablePath;
+    } catch (error) {
+      logger.warn('Sparticuz chromium not available, using default Chrome');
+    }
+  }
+  // For development, puppeteer-core will find system Chrome
+  return undefined;
+}
+
+/**
  * Initialize browser instance (singleton pattern)
  */
 async function getBrowser(): Promise<Browser> {
   if (!browser) {
     try {
-      // Dynamic import for ESM compatibility
-      const puppeteer = await import('puppeteer');
-      browser = await puppeteer.default.launch({
+      // Use puppeteer-core (no bundled browser)
+      const puppeteer = await import('puppeteer-core');
+      
+      const executablePath = await getChromiumPath();
+      
+      const launchConfig: any = {
         headless: true,
         args: [
           '--no-sandbox',
@@ -26,7 +46,14 @@ async function getBrowser(): Promise<Browser> {
           '--disable-dev-shm-usage',
           '--disable-gpu',
         ],
-      });
+      };
+      
+      // Only set executablePath if we found one
+      if (executablePath) {
+        launchConfig.executablePath = executablePath;
+      }
+      
+      browser = await puppeteer.default.launch(launchConfig);
       logger.info('Puppeteer browser initialized');
     } catch (error) {
       logger.error('Failed to launch browser: ', error);

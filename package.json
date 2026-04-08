@@ -9,7 +9,8 @@
     "build": "tsc",
     "start": "tsx src/index.ts",
     "db:migrate": "tsx src/database/migrate.ts",
-    "db:seed": "node dist/database/seed.js"
+    "db:seed": "node dist/database/seed.js",
+    "postinstall": "node -e \"if(process.env.NODE_ENV === 'production') { console.log('Skipping chromium install'); } else { console.log('Dev environment'); }\""
   },
   "keywords": [
     "express",
@@ -22,6 +23,7 @@
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {
+    "@sparticuz/chromium": "^130.1.0",
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
@@ -33,7 +35,7 @@
     "mustache": "^4.2.0",
     "pdf-lib": "^1.17.1",
     "pg": "^8.20.0",
-    "puppeteer": "^24.40.0",
+    "puppeteer-core": "^24.40.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "tsx": "^4.21.0",
