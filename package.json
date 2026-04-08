@@ -23,7 +23,7 @@
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {
-    "@sparticuz/chromium": "^130.1.0",
+    "@sparticuz/chromium": "^129.0.0",
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
